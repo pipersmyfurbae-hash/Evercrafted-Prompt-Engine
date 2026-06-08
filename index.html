@@ -1,0 +1,2973 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evercrafted — Prompt Studio</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --sage: #7a9e7e; --ivory: #faf7f2; --dark: #1c1c1c; --mid: #5a5a5a; --faint: #9a9a9a;
+  --accent: #c8a96e; --accent-deep: #b8965a; --green-dark: #3d5c38; --green-mid: #4a6741;
+  --green-light: #7a9e7e; --card: #ffffff; --border: #e0d8cc; --border-light: #ede8e0;
+  --surface: #f5f0e8; --prompt-bg: #141f12; --prompt-text: #c8e8c2;
+  --ai-bg: #1a1430; --ai-accent: #8b7fd4; --shadow-sm: 0 1px 4px rgba(0,0,0,0.08);
+}
+html { font-size: 15px; }
+body { font-family: 'Georgia', serif; background: var(--ivory); color: var(--dark); min-height: 100vh; }
+/* ── SAVE / RESTORE ── */
+.header-right { display:flex; align-items:center; gap:8px; }
+.save-status { font-size:0.68rem; letter-spacing:1px; color:rgba(255,255,255,.45); min-width:120px; text-align:right; padding-right:4px; transition:color .3s; }
+.save-status.saved { color:rgba(122,200,118,.8); }
+.save-status.dirty { color:rgba(255,200,100,.75); }
+.hdr-btn { font-family:'Georgia',serif; font-size:0.72rem; letter-spacing:1.5px; text-transform:uppercase; border:none; border-radius:5px; padding:7px 13px; cursor:pointer; transition:all .18s; white-space:nowrap; }
+.hdr-btn-ghost { background:rgba(255,255,255,.12); color:rgba(255,255,255,.85); border:1px solid rgba(255,255,255,.2); }
+.hdr-btn-ghost:hover { background:rgba(255,255,255,.22); }
+.hdr-btn-primary { background:rgba(122,171,116,.85); color:#fff; }
+.hdr-btn-primary:hover { background:rgba(122,171,116,1); }
+.hdr-btn-danger { background:rgba(180,80,70,.7); color:#fff; }
+.hdr-btn-danger:hover { background:rgba(200,80,70,.9); }
+.restore-banner { background:linear-gradient(135deg,#2d3a28,#3a4830); border-bottom:1px solid rgba(122,171,116,.3); padding:12px 32px; display:flex; align-items:center; justify-content:space-between; gap:16px; }
+.restore-banner span { font-size:0.82rem; color:rgba(245,242,236,.8); font-style:italic; }
+.restore-banner-btns { display:flex; gap:10px; flex-shrink:0; }
+.restore-yes { background:rgba(122,171,116,.9); color:#fff; border:none; border-radius:5px; padding:6px 16px; font-family:'Georgia',serif; font-size:0.72rem; letter-spacing:1px; text-transform:uppercase; cursor:pointer; }
+.restore-yes:hover { background:rgba(122,171,116,1); }
+.restore-no { background:transparent; color:rgba(245,242,236,.5); border:1px solid rgba(245,242,236,.2); border-radius:5px; padding:6px 14px; font-family:'Georgia',serif; font-size:0.72rem; letter-spacing:1px; text-transform:uppercase; cursor:pointer; }
+.restore-no:hover { color:rgba(245,242,236,.8); }
+.new-collection-confirm { position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:999; display:none; place-items:center; }
+.new-collection-confirm.open { display:grid; }
+.new-collection-box { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:36px 40px; max-width:420px; width:90%; box-shadow:0 24px 60px rgba(0,0,0,.25); }
+.new-collection-box h3 { font-family:'Georgia',serif; font-size:1.2rem; font-weight:normal; color:var(--dark); margin-bottom:10px; }
+.new-collection-box p { font-size:0.82rem; color:var(--mid); line-height:1.7; margin-bottom:24px; }
+.new-collection-box-btns { display:flex; gap:12px; }
+.new-col-confirm-btn { flex:1; background:rgba(180,80,70,.85); color:#fff; border:none; border-radius:7px; padding:11px; font-family:'Georgia',serif; font-size:0.8rem; letter-spacing:1px; text-transform:uppercase; cursor:pointer; }
+.new-col-confirm-btn:hover { background:rgba(200,80,70,1); }
+.new-col-cancel-btn { flex:1; background:transparent; color:var(--mid); border:1px solid var(--border); border-radius:7px; padding:11px; font-family:'Georgia',serif; font-size:0.8rem; letter-spacing:1px; text-transform:uppercase; cursor:pointer; }
+.new-col-cancel-btn:hover { border-color:var(--green-light); color:var(--green-dark); }
+@media(max-width:640px){ .header-right { gap:5px; } .hdr-btn { padding:6px 8px; font-size:0.65rem; } .save-status { display:none; } }
+header { background: linear-gradient(135deg, var(--green-dark) 0%, #2a3e26 100%); color: white; padding: 0 32px; height: 58px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 12px rgba(0,0,0,0.25); position: sticky; top: 0; z-index: 100; }
+.header-left { display: flex; align-items: center; gap: 14px; }
+.header-logo { font-size: 1.25rem; letter-spacing: 3px; text-transform: uppercase; font-weight: normal; }
+.header-sub { font-size: 0.72rem; opacity: 0.55; letter-spacing: 2px; text-transform: uppercase; }
+.header-badge { font-size: 0.68rem; letter-spacing: 1.5px; text-transform: uppercase; background: rgba(139,127,212,0.25); border: 1px solid rgba(139,127,212,0.4); color: #b8aff0; padding: 3px 10px; border-radius: 20px; }
+.page-nav { background: var(--card); border-bottom: 1px solid var(--border); display: flex; justify-content: center; }
+.page-nav-btn { padding: 14px 28px; font-family: 'Georgia', serif; font-size: 0.82rem; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; border: none; background: transparent; color: var(--mid); border-bottom: 3px solid transparent; transition: all 0.2s; }
+.page-nav-btn:hover { color: var(--green-dark); }
+.page-nav-btn.active { color: var(--green-dark); border-bottom-color: var(--green-dark); font-weight: bold; }
+.page-view { display: none; }
+.page-view.active { display: block; }
+.ai-brief-zone { background: linear-gradient(135deg, var(--ai-bg) 0%, #120f2a 100%); border-bottom: 1px solid rgba(139,127,212,0.2); padding: 18px 32px; }
+.ai-brief-inner { max-width: 1100px; margin: 0 auto; display: flex; gap: 14px; align-items: flex-start; }
+.ai-icon { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--ai-accent), #6c5fc8); display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; margin-top: 3px; box-shadow: 0 0 16px rgba(139,127,212,0.35); }
+.ai-brief-content { flex: 1; }
+.ai-brief-label { font-size: 0.68rem; letter-spacing: 2.5px; text-transform: uppercase; color: var(--ai-accent); margin-bottom: 6px; }
+.ai-brief-row { display: flex; gap: 10px; align-items: flex-start; }
+#aiBriefInput { flex: 1; background: rgba(255,255,255,0.06); border: 1px solid rgba(139,127,212,0.3); border-radius: 8px; color: #d8d4f0; font-family: 'Georgia', serif; font-size: 0.85rem; padding: 10px 14px; resize: none; min-height: 52px; line-height: 1.6; }
+#aiBriefInput::placeholder { color: rgba(139,127,212,0.4); }
+#aiBriefInput:focus { outline: none; border-color: var(--ai-accent); }
+.ai-brief-btn { background: linear-gradient(135deg, var(--ai-accent), #6c5fc8); border: none; color: white; border-radius: 8px; padding: 10px 18px; font-family: 'Georgia', serif; font-size: 0.8rem; letter-spacing: 1px; cursor: pointer; white-space: nowrap; transition: all 0.2s; display: flex; align-items: center; gap: 7px; }
+.ai-brief-btn:hover { transform: translateY(-1px); }
+.ai-brief-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+.ai-status { margin-top: 8px; font-size: 0.75rem; min-height: 18px; color: rgba(139,127,212,0.7); }
+.ai-status.success { color: #6ec88c; }
+.ai-status.error { color: #e88a8a; }
+.container { max-width: 1100px; margin: 0 auto; padding: 24px 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; box-shadow: var(--shadow-sm); }
+.card + .card { margin-top: 18px; }
+.card-title { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 2.5px; color: var(--green-light); border-bottom: 1px solid var(--border-light); padding-bottom: 10px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
+.ai-filled-indicator { font-size: 0.65rem; letter-spacing: 1px; background: rgba(139,127,212,0.1); border: 1px solid rgba(139,127,212,0.25); color: var(--ai-accent); padding: 2px 8px; border-radius: 10px; display: none; }
+.ai-filled-indicator.visible { display: inline-block; }
+label { display: block; font-size: 0.72rem; color: var(--mid); margin-bottom: 4px; margin-top: 13px; text-transform: uppercase; letter-spacing: 1.2px; }
+input[type="text"], input[type="number"], select, textarea { width: 100%; padding: 8px 11px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.85rem; background: var(--ivory); color: var(--dark); font-family: 'Georgia', serif; transition: border-color 0.15s; }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--green-light); }
+textarea { resize: vertical; min-height: 66px; line-height: 1.6; }
+.ai-filled { border-color: rgba(139,127,212,0.4) !important; background: rgba(139,127,212,0.04) !important; }
+.pill-group { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.pill { padding: 4px 13px; border-radius: 20px; border: 1px solid var(--border); font-size: 0.75rem; cursor: pointer; background: var(--ivory); transition: all 0.15s; color: var(--mid); user-select: none; }
+.pill:hover { border-color: var(--sage); color: var(--green-dark); }
+.pill.active { background: var(--green-dark); color: white; border-color: var(--green-dark); }
+.pill.ai-selected { outline: 2px solid rgba(139,127,212,0.5); outline-offset: 1px; }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.slider-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 10px; }
+.slider-item label { margin-top: 0; }
+.slider-row { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
+.slider-row input[type=range] { flex: 1; accent-color: var(--green-mid); }
+.slider-val { min-width: 34px; text-align: center; font-weight: bold; color: var(--green-dark); font-size: 0.85rem; }
+.tabs { display: flex; gap: 3px; }
+.tab { padding: 7px 16px; border-radius: 7px 7px 0 0; border: 1px solid var(--border); border-bottom: none; font-size: 0.78rem; cursor: pointer; background: var(--surface); color: var(--mid); transition: all 0.15s; }
+.tab.active { background: var(--card); color: var(--green-dark); font-weight: bold; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+.tab-body { border: 1px solid var(--border); border-radius: 0 8px 8px 8px; padding: 14px; }
+.btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 20px; border-radius: 7px; font-size: 0.82rem; cursor: pointer; border: none; font-family: 'Georgia', serif; letter-spacing: 0.8px; transition: all 0.15s; }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-primary { background: var(--green-dark); color: white; }
+.btn-primary:hover:not(:disabled) { background: #2e4529; transform: translateY(-1px); }
+.btn-secondary { background: var(--accent); color: white; }
+.btn-secondary:hover:not(:disabled) { background: var(--accent-deep); transform: translateY(-1px); }
+.btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--mid); }
+.btn-ghost:hover:not(:disabled) { border-color: var(--sage); color: var(--green-mid); }
+.btn-ai { background: linear-gradient(135deg, rgba(139,127,212,0.15), rgba(108,95,200,0.15)); border: 1px solid rgba(139,127,212,0.35); color: #8b7fd4; }
+.btn-ai:hover:not(:disabled) { background: linear-gradient(135deg, rgba(139,127,212,0.25), rgba(108,95,200,0.25)); transform: translateY(-1px); }
+.btn-group { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+.output-section { grid-column: 1 / -1; }
+.prompt-block { background: var(--prompt-bg); color: var(--prompt-text); border-radius: 8px; padding: 16px 18px; font-family: 'Courier New', monospace; font-size: 0.78rem; line-height: 1.75; white-space: pre-wrap; word-break: break-word; position: relative; }
+.prompt-wrap { margin-bottom: 18px; }
+.prompt-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.prompt-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 2px; color: var(--accent); font-family: 'Georgia', serif; }
+.prompt-actions { display: flex; gap: 8px; align-items: center; }
+.copy-btn { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #c8e8c2; padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 0.7rem; font-family: 'Georgia', serif; transition: all 0.15s; }
+.copy-btn:hover { background: rgba(255,255,255,0.16); }
+.copy-btn.copied { background: var(--sage); color: white; }
+.refine-btn { background: rgba(139,127,212,0.15); border: 1px solid rgba(139,127,212,0.3); color: #b0a8e0; padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 0.7rem; font-family: 'Georgia', serif; transition: all 0.15s; }
+.refine-btn:hover { background: rgba(139,127,212,0.25); }
+.refine-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.tip-box { background: #f0f4ee; border-left: 3px solid var(--sage); padding: 10px 14px; border-radius: 0 6px 6px 0; font-size: 0.8rem; color: var(--mid); margin-top: 10px; line-height: 1.6; }
+.tag-row { margin-bottom: 12px; display: flex; flex-wrap: wrap; gap: 6px; }
+.tag { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 4px; font-size: 0.7rem; }
+.tag-green { background: #e8f5e9; color: var(--green-dark); }
+.tag-red { background: #fce4ec; color: #c62828; }
+.empty-state { text-align: center; padding: 40px 20px; color: var(--mid); font-size: 0.88rem; border: 2px dashed var(--border); border-radius: 10px; }
+.empty-icon { font-size: 2.2rem; margin-bottom: 12px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-overlay { position: absolute; inset: 0; background: rgba(20,31,18,0.85); border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 0.8rem; color: rgba(200,232,194,0.7); letter-spacing: 1px; font-family: 'Georgia', serif; }
+
+/* HOW TO */
+/* ── LIFESTYLE BUILDER ── */
+.ls-builder-page { max-width: 980px; margin: 0 auto; padding: 36px 20px 80px; }
+.ls-hero { background: linear-gradient(135deg, #1a1610 0%, #2e2418 50%, #1e1c14 100%); border-radius: 16px; padding: 44px 40px 36px; margin-bottom: 28px; position: relative; overflow: hidden; }
+.ls-hero::before { content:''; position:absolute; inset:0; background: radial-gradient(ellipse at 20% 80%, rgba(180,140,90,.14) 0%, transparent 65%), radial-gradient(ellipse at 80% 20%, rgba(74,103,65,.16) 0%, transparent 60%); pointer-events:none; }
+.ls-hero-inner { position:relative; z-index:1; }
+.ls-eyebrow { font-size: 0.68rem; letter-spacing: 3px; text-transform: uppercase; color: #b09060; margin-bottom: 12px; }
+.ls-title { font-family: 'Georgia', serif; font-size: 1.9rem; font-weight: normal; color: #f5f2ec; margin: 0 0 14px; letter-spacing: -0.02em; }
+.ls-subtitle { font-size: 0.84rem; color: rgba(245,242,236,.68); line-height: 1.75; max-width: 580px; }
+.ls-status-bar { position:relative; z-index:1; display:flex; align-items:center; gap:10px; margin-top:24px; padding-top:22px; border-top:1px solid rgba(245,242,236,.1); }
+.ls-status-dot { width:8px; height:8px; border-radius:50%; background:#555; flex-shrink:0; transition:background .4s; }
+.ls-status-dot.ready { background:#7aab74; box-shadow:0 0 8px rgba(122,171,116,.5); }
+.ls-status-dot.working { background:#b09060; animation: pulse-dot 1.2s ease-in-out infinite; }
+.ls-status-dot.done { background:#7aab74; }
+@keyframes pulse-dot { 0%,100%{opacity:1;} 50%{opacity:.35;} }
+#lsStatusText { font-size: 0.75rem; color: rgba(245,242,236,.55); letter-spacing: 0.5px; }
+.ls-controls { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px 24px; margin-bottom: 28px; }
+.ls-controls-inner { display:flex; align-items:flex-end; gap:20px; flex-wrap:wrap; }
+.ls-field { display:flex; flex-direction:column; gap:5px; }
+.ls-field label { font-size:0.68rem; color:var(--mid); text-transform:uppercase; letter-spacing:1px; }
+.ls-field input { padding:8px 10px; border:1px solid var(--border); border-radius:6px; font-size:0.82rem; background:var(--ivory); color:var(--dark); font-family:'Georgia',serif; }
+.ls-gen-btn { background: var(--green-dark); color: #f5f2ec; border: none; border-radius: 8px; padding: 11px 28px; font-family: 'Georgia', serif; font-size: 0.82rem; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; transition: all 0.2s; white-space:nowrap; }
+.ls-gen-btn:hover { background: var(--green-light); }
+.ls-gen-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.ls-tip { font-size: 0.78rem; color: var(--mid); line-height: 1.65; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border-light); font-style: italic; }
+.ls-cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 20px; }
+.ls-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; transition: box-shadow .25s; }
+.ls-card:hover { box-shadow: var(--shadow-sm); }
+.ls-card-header { padding: 16px 18px 0; }
+.ls-card-scene { font-size: 0.65rem; letter-spacing: 2.2px; text-transform: uppercase; color: var(--green-light); margin-bottom: 5px; }
+.ls-card-title { font-family: 'Georgia', serif; font-size: 1rem; color: var(--dark); font-weight: normal; letter-spacing: .01em; }
+.ls-card-desc { font-size: 0.75rem; color: var(--mid); line-height: 1.6; margin-top: 5px; font-style: italic; }
+.ls-card-prompt-wrap { padding: 12px 18px; }
+.ls-card-prompt { background: var(--prompt-bg); color: var(--prompt-text); border-radius: 6px; padding: 10px 12px; font-family: 'Courier New', monospace; font-size: 0.68rem; line-height: 1.7; white-space: pre-wrap; word-break: break-word; min-height: 54px; }
+.ls-card-prompt.empty { color: var(--faint); font-style: italic; font-family: 'Georgia', serif; font-size: 0.75rem; font-family: inherit; }
+.ls-card-actions { display:flex; gap:8px; padding: 0 18px 10px; flex-wrap:wrap; }
+.ls-card-copy { background: transparent; border: 1px solid var(--border); border-radius: 5px; padding: 5px 12px; font-size: 0.68rem; letter-spacing: 1px; text-transform: uppercase; color: var(--mid); cursor: pointer; transition: all 0.18s; }
+.ls-card-copy:hover { border-color: var(--green-light); color: var(--green-dark); }
+.ls-card-copy.copied { border-color: var(--green-dark); color: var(--green-dark); }
+.ls-card-refine { background: transparent; border: 1px solid var(--border); border-radius: 5px; padding: 5px 12px; font-size: 0.68rem; letter-spacing: 1px; text-transform: uppercase; color: var(--mid); cursor: pointer; transition: all 0.18s; }
+.ls-card-refine:hover { border-color: #b09060; color: #8a6a30; }
+.ls-card-divider { height: 1px; background: var(--border-light); margin: 0 18px; }
+.ls-card-upload { padding: 14px 18px 18px; }
+.ls-upload-label { font-size: 0.65rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid); margin-bottom: 10px; display:block; }
+.ls-upload-zone { position: relative; border-radius: 8px; overflow: hidden; aspect-ratio: 4/3; background: var(--ivory); border: 1px dashed var(--border); cursor: pointer; display:grid; place-items:center; transition: border-color .2s; }
+.ls-upload-zone:hover { border-color: var(--green-light); }
+.ls-upload-zone.has-image { border-style: solid; border-color: var(--border); }
+.ls-upload-placeholder { text-align:center; color: var(--faint); pointer-events:none; }
+.ls-upload-icon { font-size: 1.6rem; display:block; margin-bottom:6px; }
+.ls-upload-placeholder span { font-size: 0.7rem; letter-spacing: 1px; text-transform: uppercase; color: var(--mid); }
+.ls-upload-img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:none; }
+.ls-upload-img.visible { display:block; }
+.ls-upload-overlay { position:absolute; inset:0; background:rgba(0,0,0,.45); display:grid; place-items:center; opacity:0; transition:opacity .2s; }
+.ls-upload-zone.has-image:hover .ls-upload-overlay { opacity:1; }
+.ls-upload-overlay span { font-size:0.68rem; letter-spacing:1.5px; text-transform:uppercase; color:#fff; }
+.ls-upload-clear { position:absolute; top:6px; right:6px; width:22px; height:22px; border-radius:50%; background:rgba(0,0,0,.55); color:#fff; border:none; cursor:pointer; font-size:0.75rem; display:flex; align-items:center; justify-content:center; opacity:0; transition:opacity .2s; z-index:2; }
+.ls-upload-zone.has-image:hover .ls-upload-clear { opacity:1; }
+@media(max-width:600px) { .ls-hero { padding:28px 20px; } .ls-title { font-size:1.5rem; } .ls-controls-inner { flex-direction:column; align-items:stretch; } }
+/* ── LOOKBOOK PAGE ── */
+.lookbook-page { max-width: 860px; margin: 0 auto; padding: 36px 20px 80px; }
+.lb-hero { background: linear-gradient(135deg, #1a2016 0%, #2d3d28 100%); border-radius: 16px; padding: 44px 40px; margin-bottom: 32px; position: relative; overflow: hidden; }
+.lb-hero::before { content:''; position:absolute; inset:0; background: radial-gradient(ellipse at 80% 50%, rgba(107,143,103,0.18) 0%, transparent 70%); pointer-events:none; }
+.lb-eyebrow { font-size: 0.68rem; letter-spacing: 3px; text-transform: uppercase; color: #7aab74; margin-bottom: 12px; }
+.lb-title { font-family: 'Georgia', serif; font-size: 2rem; font-weight: normal; color: #f5f2ec; margin: 0 0 14px; letter-spacing: -0.02em; }
+.lb-subtitle { font-size: 0.85rem; color: rgba(245,242,236,0.72); line-height: 1.75; max-width: 520px; margin: 0; }
+.lb-checklist { margin-top: 28px; display: flex; gap: 14px; flex-wrap: wrap; }
+.lb-check-item { font-size: 0.75rem; letter-spacing: 1px; text-transform: uppercase; color: rgba(245,242,236,0.5); display: flex; align-items: center; gap: 7px; transition: color 0.3s; }
+.lb-check-item.ready { color: #7aab74; }
+.lb-check-icon { font-size: 1rem; }
+.lb-section { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px 26px; margin-bottom: 20px; }
+.lb-section-label { font-size: 0.68rem; letter-spacing: 2.5px; text-transform: uppercase; color: var(--green-dark); margin-bottom: 16px; font-weight: bold; }
+.lb-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 14px; }
+.lb-field { display: flex; flex-direction: column; gap: 5px; }
+.lb-field-full { grid-column: 1 / -1; }
+.lb-field label { font-size: 0.68rem; color: var(--mid); text-transform: uppercase; letter-spacing: 1px; }
+.lb-field input { padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.82rem; background: var(--ivory); color: var(--dark); font-family: 'Georgia', serif; }
+.lb-field input:focus { outline: none; border-color: var(--green-light); }
+.lifestyle-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-bottom: 14px; min-height: 20px; }
+.lifestyle-item { position: relative; border-radius: 8px; overflow: hidden; aspect-ratio: 4/3; background: var(--ivory); border: 1px solid var(--border); }
+.lifestyle-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.lifestyle-item-caption { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(0deg, rgba(0,0,0,0.6) 0%, transparent 100%); padding: 6px 8px; }
+.lifestyle-item-caption input { background: transparent; border: none; color: rgba(255,255,255,0.85); font-size: 0.65rem; width: 100%; font-family: 'Georgia', serif; letter-spacing: 0.5px; }
+.lifestyle-item-caption input::placeholder { color: rgba(255,255,255,0.5); }
+.lifestyle-item-remove { position: absolute; top: 5px; right: 5px; width: 20px; height: 20px; border-radius: 50%; background: rgba(0,0,0,0.55); color: #fff; border: none; cursor: pointer; font-size: 0.65rem; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; }
+.lifestyle-item:hover .lifestyle-item-remove { opacity: 1; }
+.lb-add-btn { background: transparent; border: 1px dashed var(--border); border-radius: 6px; padding: 8px 16px; font-size: 0.75rem; color: var(--mid); cursor: pointer; letter-spacing: 1px; text-transform: uppercase; transition: all 0.2s; }
+.lb-add-btn:hover { border-color: var(--green-light); color: var(--green-dark); }
+.lb-status-idle { font-size: 0.82rem; color: var(--mid); font-style: italic; padding: 12px 0 0; }
+.lb-status-working { font-size: 0.82rem; color: var(--green-dark); font-style: italic; padding: 12px 0 0; }
+.lb-status-done { font-size: 0.82rem; color: #3a7a38; padding: 12px 0 0; }
+.lb-btn-primary { background: var(--green-dark); color: #f5f2ec; border: none; border-radius: 7px; padding: 12px 26px; font-family: 'Georgia', serif; font-size: 0.82rem; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; transition: all 0.2s; }
+.lb-btn-primary:hover { background: var(--green-light); }
+.lb-btn-ghost { background: transparent; color: var(--green-dark); border: 1px solid var(--green-dark); border-radius: 7px; padding: 11px 22px; font-family: 'Georgia', serif; font-size: 0.82rem; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; transition: all 0.2s; }
+.lb-btn-ghost:hover { background: var(--green-dim); }
+@media(max-width:600px) { .lb-row { grid-template-columns: 1fr; } .lb-hero { padding: 28px 20px; } .lb-title { font-size: 1.5rem; } }
+/* ── HOW TO PAGE ── */
+.howto-pipeline { display:flex; align-items:center; gap:0; margin:0 0 40px; flex-wrap:wrap; gap:6px; }
+.pipeline-step { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px 18px; text-align:center; flex:1; min-width:100px; }
+.pipeline-icon { font-size:1.3rem; margin-bottom:5px; }
+.pipeline-label { font-size:0.72rem; font-weight:bold; letter-spacing:1.2px; text-transform:uppercase; color:var(--green-dark); margin-bottom:3px; }
+.pipeline-desc { font-size:0.68rem; color:var(--faint); letter-spacing:0.5px; }
+.pipeline-arrow { font-size:1.1rem; color:var(--border); flex-shrink:0; padding:0 2px; }
+.howto-tab-head { display:flex; align-items:center; gap:12px; background:linear-gradient(135deg, var(--green-dim), transparent); border:1px solid var(--border); border-left:3px solid var(--green-dark); border-radius:0 8px 8px 0; padding:14px 20px; margin:36px 0 24px; }
+.howto-tab-badge { font-family:var(--mono,'DM Mono',monospace); font-size:0.68rem; letter-spacing:2px; text-transform:uppercase; background:var(--green-dark); color:#fff; border-radius:4px; padding:3px 9px; flex-shrink:0; }
+.howto-tab-name { font-family:'Georgia',serif; font-size:1.05rem; color:var(--dark); font-weight:normal; }
+.howto-tab-desc { font-size:0.78rem; color:var(--mid); font-style:italic; margin-left:auto; text-align:right; }
+@media(max-width:600px){ .howto-tab-desc { display:none; } .howto-pipeline { gap:4px; } .pipeline-arrow { display:none; } }
+.howto-page { max-width: 820px; margin: 0 auto; padding: 36px 20px 60px; }
+.howto-page h1 { font-size: 1.5rem; letter-spacing: 2px; text-transform: uppercase; color: var(--green-dark); margin-bottom: 6px; font-weight: normal; }
+.howto-subtitle { font-size: 0.82rem; color: var(--faint); letter-spacing: 1px; margin-bottom: 36px; }
+.step-block { display: flex; gap: 20px; margin-bottom: 32px; }
+.step-num { width: 38px; height: 38px; border-radius: 50%; background: var(--green-dark); color: white; display: flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: bold; flex-shrink: 0; margin-top: 2px; }
+.step-body { flex: 1; }
+.step-title { font-size: 1rem; color: var(--green-dark); margin-bottom: 7px; font-weight: bold; }
+.step-body p { font-size: 0.88rem; color: var(--mid); line-height: 1.75; margin-bottom: 8px; }
+.step-note { background: #f0f4ee; border-left: 3px solid var(--sage); padding: 10px 14px; border-radius: 0 6px 6px 0; font-size: 0.82rem; color: var(--mid); margin-top: 10px; line-height: 1.65; }
+.step-note.warn { background: #fdf6ec; border-left-color: var(--accent); }
+.step-divider { border: none; border-top: 1px solid var(--border-light); margin: 32px 0; }
+.section-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 3px; color: var(--green-light); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+.section-label::after { content: ''; flex: 1; height: 1px; background: var(--border-light); }
+
+/* COLLECTION */
+.collection-page { max-width: 1100px; margin: 0 auto; padding: 24px 20px 60px; }
+.collection-header { margin-bottom: 24px; }
+.collection-header h2 { font-size: 1.1rem; letter-spacing: 2px; text-transform: uppercase; color: var(--green-dark); font-weight: normal; margin-bottom: 4px; }
+.collection-header p { font-size: 0.85rem; color: var(--mid); line-height: 1.65; }
+.collection-setup { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+.collection-wreaths { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-bottom: 24px; }
+.wreath-slot { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 18px; box-shadow: var(--shadow-sm); }
+.wreath-slot-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border-light); }
+.wreath-slot-num { font-size: 0.68rem; letter-spacing: 2px; text-transform: uppercase; color: var(--green-light); }
+.wreath-slot-name { font-size: 0.82rem; color: var(--dark); font-style: italic; }
+.wreath-slot-name-input { flex:1; margin-left:10px; font-family:'Georgia',serif; font-size:0.9rem; font-style:italic; color:var(--dark); background:transparent; border:none; border-bottom:1px solid transparent; padding:2px 4px; outline:none; transition:border-color .2s; min-width:0; }
+.wreath-slot-name-input:hover { border-bottom-color:var(--border); }
+.wreath-slot-name-input:focus { border-bottom-color:var(--green-light); background:rgba(122,158,126,0.04); border-radius:3px 3px 0 0; }
+.wreath-slot-name-input::placeholder { color:var(--faint); font-style:italic; }
+
+.wreath-slot label { font-size: 0.68rem; color: var(--mid); display: block; margin-top: 10px; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 1px; }
+.wreath-slot input, .wreath-slot select, .wreath-slot textarea { width: 100%; padding: 6px 9px; border: 1px solid var(--border); border-radius: 5px; font-size: 0.8rem; background: var(--ivory); color: var(--dark); font-family: 'Georgia', serif; }
+.wreath-slot textarea { min-height: 50px; resize: vertical; line-height: 1.5; }
+.wreath-slot-prompt { background: var(--prompt-bg); color: var(--prompt-text); border-radius: 6px; padding: 10px 12px; font-family: 'Courier New', monospace; font-size: 0.7rem; line-height: 1.65; white-space: pre-wrap; word-break: break-word; margin-top: 10px; min-height: 52px; }
+.wreath-slot-actions { display: flex; gap: 8px; margin-top: 8px; }
+.slot-btn { flex: 1; padding: 6px; border-radius: 5px; cursor: pointer; font-size: 0.72rem; font-family: 'Georgia', serif; transition: all 0.15s; text-align: center; border: 1px solid var(--border); background: transparent; }
+.slot-btn-copy { color: var(--green-dark); }
+.slot-btn-copy:hover { background: rgba(61,92,56,0.08); }
+.slot-btn-copy.copied { background: var(--green-dark); color: white; }
+.slot-btn-ai { color: var(--ai-accent); border-color: rgba(139,127,212,0.3); background: rgba(139,127,212,0.06); }
+.slot-btn-ai:hover { background: rgba(139,127,212,0.15); }
+.slot-btn-ai:disabled { opacity: 0.4; cursor: not-allowed; }
+.slot-upload-zone-hover { border-color: var(--green-light) !important; background: rgba(122,158,126,0.05) !important; }
+.coll-status { font-size: 0.78rem; color: rgba(139,127,212,0.8); margin-top: 8px; min-height: 20px; line-height: 1.5; }
+.coll-status.success { color: #6ec88c; }
+.coll-status.error { color: #e88a8a; }
+#storyModeToggle:checked + #storyModeTrack { background: var(--ai-accent); }
+#storyModeToggle:checked ~ #storyModeThumb { transform: translateX(16px); }
+
+footer { text-align: center; padding: 18px; font-size: 0.72rem; color: #bbb; letter-spacing: 1.5px; text-transform: uppercase; }
+@media (max-width: 700px) {
+  .container, .collection-setup, .collection-wreaths { grid-template-columns: 1fr; }
+  .row, .slider-pair { grid-template-columns: 1fr; }
+  header, .ai-brief-zone { padding-left: 16px; padding-right: 16px; }
+  .page-nav-btn { padding: 12px 14px; font-size: 0.72rem; }
+}
+/* ── ELEVENLABS VOICE ── */
+.story-listen-bar { display:flex; align-items:center; gap:10px; margin-top:12px; flex-wrap:wrap; }
+.listen-btn { display:inline-flex; align-items:center; gap:7px; background:linear-gradient(135deg,#2a1f3d,#1e1630); border:1px solid rgba(139,127,212,0.4); color:#c8bff5; font-family:'Georgia',serif; font-size:0.75rem; letter-spacing:1.5px; text-transform:uppercase; padding:8px 18px; border-radius:20px; cursor:pointer; transition:all .18s; white-space:nowrap; }
+.listen-btn:hover { background:linear-gradient(135deg,#3a2a55,#2e1f4a); border-color:rgba(139,127,212,0.7); color:#ddd8ff; }
+.listen-btn:disabled { opacity:.45; cursor:not-allowed; }
+.audio-player-bar { display:none; align-items:center; gap:10px; background:linear-gradient(135deg,#1a1430,#140f2a); border:1px solid rgba(139,127,212,0.3); border-radius:10px; padding:10px 16px; margin-top:10px; }
+.audio-player-bar.active { display:flex; }
+.ap-controls { display:flex; gap:6px; flex-shrink:0; }
+.ap-btn { width:32px; height:32px; border-radius:50%; border:1px solid rgba(139,127,212,0.4); background:rgba(139,127,212,0.12); color:#c8bff5; font-size:0.9rem; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .15s; }
+.ap-btn:hover { background:rgba(139,127,212,0.25); }
+.ap-btn:disabled { opacity:.35; cursor:not-allowed; }
+.ap-progress { flex:1; display:flex; align-items:center; gap:8px; min-width:0; }
+.ap-seek { flex:1; height:3px; -webkit-appearance:none; appearance:none; background:rgba(139,127,212,0.25); border-radius:2px; cursor:pointer; outline:none; }
+.ap-seek::-webkit-slider-thumb { -webkit-appearance:none; width:12px; height:12px; border-radius:50%; background:#8b7fd4; cursor:pointer; }
+.ap-time { font-size:0.68rem; color:rgba(139,127,212,0.7); white-space:nowrap; min-width:70px; text-align:right; font-family:monospace; }
+.ap-voice-select { font-family:'Georgia',serif; font-size:0.72rem; background:rgba(255,255,255,0.06); border:1px solid rgba(139,127,212,0.3); color:#c8bff5; border-radius:6px; padding:5px 8px; cursor:pointer; max-width:160px; }
+.ap-voice-select option { background:#1a1430; color:#d8d4f0; }
+.ap-generating { font-size:0.72rem; color:rgba(139,127,212,0.7); font-style:italic; animation:ap-pulse 1.4s ease-in-out infinite; }
+@keyframes ap-pulse { 0%,100%{opacity:.5} 50%{opacity:1} }
+.el-modal { position:fixed; inset:0; background:rgba(0,0,0,.65); z-index:1001; display:none; place-items:center; }
+.el-modal.open { display:grid; }
+.el-modal-box { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:36px 40px; max-width:460px; width:90%; box-shadow:0 24px 60px rgba(0,0,0,.3); }
+.el-modal-box h3 { font-family:'Georgia',serif; font-size:1.15rem; font-weight:normal; margin-bottom:8px; color:var(--dark); }
+.el-modal-box p { font-size:0.82rem; color:var(--mid); line-height:1.7; margin-bottom:4px; }
+.el-modal-box a { color:var(--green-mid); text-decoration:none; }
+.el-modal-box a:hover { text-decoration:underline; }
+.el-key-input { width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:7px; font-size:0.85rem; font-family:monospace; margin:12px 0 4px; background:var(--ivory); color:var(--dark); }
+.el-key-note { font-size:0.73rem; color:var(--faint); margin-bottom:18px; line-height:1.6; }
+.el-modal-btns { display:flex; gap:10px; }
+.el-save-btn { flex:1; background:var(--green-dark); color:#fff; border:none; border-radius:7px; padding:11px; font-family:'Georgia',serif; font-size:0.8rem; letter-spacing:1px; text-transform:uppercase; cursor:pointer; transition:background .15s; }
+.el-save-btn:hover { background:var(--green-mid); }
+.el-cancel-btn { background:transparent; color:var(--mid); border:1px solid var(--border); border-radius:7px; padding:11px 18px; font-family:'Georgia',serif; font-size:0.8rem; letter-spacing:1px; text-transform:uppercase; cursor:pointer; }
+.el-cancel-btn:hover { border-color:var(--green-light); color:var(--green-dark); }
+.el-clear-btn { font-family:'Georgia',serif; font-size:0.7rem; letter-spacing:1px; text-transform:uppercase; color:rgba(180,80,70,.7); background:transparent; border:none; cursor:pointer; padding:0; margin-top:8px; display:block; }
+.el-clear-btn:hover { color:rgba(200,80,70,1); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div>
+      <div class="header-logo">🌿 Evercrafted</div>
+      <div class="header-sub">Midjourney Prompt Studio</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="save-status" id="saveStatus"></div>
+    <button class="hdr-btn hdr-btn-ghost" id="btnLoad">⬆ Load</button>
+    <button class="hdr-btn hdr-btn-primary" id="btnSave">⬇ Save</button>
+    <button class="hdr-btn hdr-btn-danger" id="btnNew">✕ New</button>
+    <input type="file" id="sessionFileInput" accept=".json" style="display:none">
+  </div>
+</header>
+
+<!-- RESTORE BANNER -->
+<div id="restoreBanner" style="display:none" class="restore-banner">
+  <span id="restoreBannerText">Unsaved session from your last visit.</span>
+  <div class="restore-banner-btns">
+    <button class="restore-yes" id="restoreYes">Restore it</button>
+    <button class="restore-no" id="restoreNo">Dismiss</button>
+  </div>
+</div>
+
+
+<!-- NEW COLLECTION CONFIRM MODAL -->
+<div class="new-collection-confirm" id="newCollectionModal">
+  <div class="new-collection-box">
+    <h3>Start a new collection?</h3>
+    <p>This will clear your current collection name, story, all wreath prompts, seeds, renders, and lifestyle prompts. Your lookbook settings will stay.<br><br>Make sure you've saved your session first if you want to keep this work.</p>
+    <div class="new-collection-box-btns">
+      <button class="new-col-confirm-btn" id="newColConfirm">Yes, clear everything</button>
+      <button class="new-col-cancel-btn" id="newColCancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ELEVENLABS API KEY MODAL -->
+<div class="el-modal" id="elModal">
+  <div class="el-modal-box">
+    <h3>✦ ElevenLabs Voice</h3>
+    <p>To listen to your collection story read aloud in a beautiful natural voice, enter your ElevenLabs API key below. Your key is stored only in your browser and never sent anywhere except ElevenLabs.</p>
+    <p style="margin-top:8px">Don't have a key? <a href="https://elevenlabs.io" target="_blank">elevenlabs.io</a> — the free tier (10,000 characters/month) is more than enough for stories this length.</p>
+    <input type="password" class="el-key-input" id="elKeyInput" placeholder="sk_…your ElevenLabs API key">
+    <div class="el-key-note">Your key is saved to localStorage on this device only. It never leaves your browser except to call ElevenLabs directly.</div>
+    <div class="el-modal-btns">
+      <button class="el-save-btn" id="elSaveKey">Save Key &amp; Listen</button>
+      <button class="el-cancel-btn" id="elCancelKey">Cancel</button>
+    </div>
+    <button class="el-clear-btn" id="elClearKey" style="display:none">✕ Remove saved key</button>
+  </div>
+</div>
+
+<nav class="page-nav">
+  <button class="page-nav-btn active" data-page="studio">Studio</button>
+  <button class="page-nav-btn" data-page="collection">Collection Builder</button>
+  <button class="page-nav-btn" data-page="lifestyle">Lifestyle Prompts</button>
+  <button class="page-nav-btn" data-page="lookbook">✦ Lookbook</button>
+  <button class="page-nav-btn" data-page="howto">How To</button>
+</nav>
+
+<!-- STUDIO -->
+<div class="page-view active" id="page-studio">
+  <div class="ai-brief-zone">
+    <div class="ai-brief-inner">
+      <div class="ai-icon">✦</div>
+      <div class="ai-brief-content">
+        <div class="ai-brief-label">Emotional Brief → Auto-Configure</div>
+        <div class="ai-brief-row">
+          <textarea id="aiBriefInput" placeholder="Describe the feeling, memory, season, or story behind this wreath…" rows="2"></textarea>
+          <button class="ai-brief-btn" id="aiBriefBtn">
+            <span id="briefBtnIcon">✦</span><span id="briefBtnText">Configure</span>
+          </button>
+        </div>
+        <div class="ai-status" id="aiStatus"></div>
+      </div>
+    </div>
+  </div>
+  <div class="container">
+    <div>
+      <div class="card">
+        <div class="card-title">Wreath Specifications <span class="ai-filled-indicator" id="ind-specs">✦ AI Filled</span></div>
+        <label>Season / Collection</label>
+        <div class="pill-group" id="seasonPills">
+          <div class="pill active" data-val="summer">Summer</div><div class="pill" data-val="spring">Spring</div><div class="pill" data-val="autumn">Autumn</div><div class="pill" data-val="holiday">Holiday</div><div class="pill" data-val="boho">Boho</div><div class="pill" data-val="farmhouse">Farmhouse</div><div class="pill" data-val="modern minimal">Modern Minimal</div><div class="pill" data-val="winter">Winter</div>
+        </div>
+        <div class="row" style="margin-top:13px">
+          <div><label>Diameter (inches)</label><select id="diameter"><option>12</option><option>14</option><option>16</option><option>18</option><option>20</option><option selected>24</option><option>26</option><option>28</option><option>30</option></select></div>
+          <div><label>Base Type</label><select id="baseType"><option value="grapevine">Grapevine</option><option value="foam ring">Foam Ring</option><option value="thin gold metal hoop">Gold Metal Hoop</option><option value="thin black metal hoop">Black Metal Hoop</option><option value="wire frame">Wire Frame</option><option value="cedar or pine base">Cedar / Pine</option></select></div>
+        </div>
+        <label>Form / Structure</label>
+        <div class="pill-group" id="formPills">
+          <div class="pill" data-val="full 360 degree ring">Full 360°</div><div class="pill active" data-val="incomplete circular form with intentional asymmetry">Incomplete Circle</div><div class="pill" data-val="full and lush, layered depth">Full &amp; Lush</div><div class="pill" data-val="low profile and flat">Low Profile</div><div class="pill" data-val="open airy form, minimal material, maximized negative space">Open &amp; Airy</div>
+        </div>
+        <label>Composition / Coverage</label>
+        <div class="pill-group" id="coveragePills">
+          <div class="pill active" data-val="dominant botanical mass from 2 to 7 o'clock, open and bare from 8 to 1 o'clock, 15-22% natural base visible, controlled negative space">Asymmetrical (2–7)</div><div class="pill" data-val="evenly distributed florals around the full ring, balanced 360 degree coverage">Full Even</div><div class="pill" data-val="crescent composition, dense florals wrapping lower right to upper right, bare vine on left side">Crescent Right</div><div class="pill" data-val="large floral cluster at the bottom center, light airy greenery around the rest of the ring">Bottom Cluster</div><div class="pill" data-val="side swag composition, heavy florals sweeping from upper left to lower left, open on right">Side Swag Left</div><div class="pill" data-val="half moon composition, dense botanicals along the lower half, bare and open on the upper half">Half Moon</div><div class="pill" data-val="corner-weighted top-right cluster with diagonal movement toward lower-left, significant open base">Diagonal Drift</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Palette &amp; Materials <span class="ai-filled-indicator" id="ind-palette">✦ AI Filled</span></div>
+        <label>Color Palette Preset</label>
+        <div class="pill-group" id="palettePills">
+          <div class="pill active" data-val="sea-glass green, sage, and creamy white dominate, ONE subtle citrus-yellow accent, NO pink, NO lavender, NO neon">Summer Calm</div><div class="pill" data-val="soft sage green and blush white dominate, pale lemon accent, NO hot pink, NO bright orange">Spring Fresh</div><div class="pill" data-val="deep burnt orange, rust, and ivory dominate, matte bark brown accents, NO pinks">Autumn Harvest</div><div class="pill" data-val="deep hunter green and rich red dominate, creamy white and gold accents, NO orange">Holiday Classic</div><div class="pill" data-val="sand, ivory, and blush neutrals dominate, warm gold accent, NO bright colors">Boho Neutral</div><div class="pill" data-val="sage green and ivory dominate, natural brown vine showing, warm cream accents">Farmhouse Classic</div><div class="pill" data-val="pure white and cream dominate, minimal palette, NO color, NO fillers">Modern Minimal</div><div class="pill" data-val="deep navy and forest green, silver and ice-white, NO warm tones">Winter Stillness</div>
+        </div>
+        <label>Custom Palette (overrides preset)</label>
+        <input type="text" id="customPalette" placeholder="e.g. dusty mauve, grey-green, champagne, NO warm tones">
+        <label>Primary Foliage (2–3 species max)</label>
+        <input type="text" id="foliage" value="matte silver-dollar eucalyptus, faux olive branches">
+        <label>Primary Florals</label>
+        <input type="text" id="florals" value="ivory hydrangea clusters (primary mass), white garden roses (focal pops), buttercream ranunculus (warmth)">
+        <label>Accents &amp; Fillers</label>
+        <input type="text" id="accents" value="ivory berry clusters (punctuation only), fine twig tips (minimal reach)">
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="card-title">Photography &amp; Setting</div>
+        <label>Background</label>
+        <div class="pill-group" id="bgPills">
+          <div class="pill active" data-val="neutral plaster background">Plaster Wall</div><div class="pill" data-val="clean white studio background">White Studio</div><div class="pill" data-val="luxury interior setting with soft ambient light">Luxury Interior</div><div class="pill" data-val="hanging on a dark stained wooden front door with black hardware, natural outdoor daylight">Front Door</div><div class="pill" data-val="rustic weathered garden gate, natural light">Garden Gate</div><div class="pill" data-val="pale sage linen wall, warm morning light, editorial lifestyle setting">Linen Wall</div>
+        </div>
+        <label>Camera Angle</label>
+        <div class="pill-group" id="anglePills">
+          <div class="pill active" data-val="flat-lay straight-on product view, entire wreath fully visible, minimal distortion">Straight On</div><div class="pill" data-val="slight 15 degree angle to show depth and dimension">15° Angle</div><div class="pill" data-val="macro close-up detail of lower cluster, shallow depth of field, creamy bokeh background">Close-Up Detail</div><div class="pill" data-val="three-quarter angle showing both depth and full form">Three-Quarter</div>
+        </div>
+        <div class="row" style="margin-top:13px">
+          <div><label>Blueprint SVG URL</label><input type="text" id="blueprintUrl" placeholder="https://...blueprint.svg"></div>
+          <div><label>Layout Ref URL <span style="text-transform:none;letter-spacing:0;font-size:0.68rem;color:var(--faint)">(–iw)</span></label><input type="text" id="heroUrl" placeholder="Paste approved render URL"></div>
+        </div>
+        <div style="margin-top:10px;display:flex;align-items:center;gap:10px">
+          <label style="margin:0;display:flex;align-items:center;gap:7px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:0.78rem;color:var(--mid)">
+            <input type="checkbox" id="discordMode" style="width:auto;accent-color:var(--green-dark)"> Discord mode
+          </label>
+          <span id="discordBadge" style="display:none;font-size:0.68rem;background:rgba(139,127,212,0.1);border:1px solid rgba(139,127,212,0.3);color:#8b7fd4;padding:2px 8px;border-radius:10px">Discord Only</span>
+        </div>
+        <div id="discordOnlyFields" style="display:none;margin-top:10px;padding:10px 12px;background:#f5f0f8;border:1px solid rgba(139,127,212,0.2);border-radius:7px">
+          <div class="row">
+            <div><label>sref URL</label><input type="text" id="srefUrl" placeholder="https://...style-ref.jpg"></div>
+            <div><label>Style Weight --sw <span id="swDiscordVal" style="font-weight:bold;color:#8b7fd4">180</span></label><input type="range" id="swDiscord" min="0" max="1000" value="180" step="10" style="width:100%;margin-top:6px;accent-color:#8b7fd4"></div>
+          </div>
+          <div class="tip-box" style="margin-top:8px;background:#ede8f5;border-left-color:#8b7fd4">⚠️ --sref not supported in Midjourney web UI.</div>
+        </div>
+        <div class="row" style="margin-top:13px">
+          <div><label>Seed</label><input type="number" id="seed" placeholder="Paste after first run"></div>
+          <div><label>Aspect Ratio</label><select id="ar"><option value="4:5" selected>4:5 — Etsy/Amazon</option><option value="1:1">1:1 — Square</option><option value="3:4">3:4</option><option value="3:2">3:2 — Detail</option><option value="16:9">16:9 — Banner</option></select></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Parameter Tuning</div>
+        <div class="tabs">
+          <div class="tab active" data-panel="production">Production</div>
+          <div class="tab" data-panel="explore">Explore</div>
+          <div class="tab" data-panel="lock">Layout Lock</div>
+        </div>
+        <div class="tab-body">
+          <div class="tab-panel active" id="panel-production">
+            <div class="slider-pair">
+              <div class="slider-item"><label>Chaos <span id="chaosVal" class="slider-val">6</span></label><div class="slider-row"><input type="range" id="chaos" min="1" max="25" value="6"></div></div>
+              <div class="slider-item"><label>Stylize <span id="stylizeVal" class="slider-val">75</span></label><div class="slider-row"><input type="range" id="stylize" min="0" max="200" value="75" step="5"></div></div>
+              <div class="slider-item"><label>Img Weight <span id="iwVal" class="slider-val">1.2</span></label><div class="slider-row"><input type="range" id="iw" min="0.5" max="2.5" value="1.2" step="0.1"></div></div>
+              <div class="slider-item"><label>Style Wt <span id="swVal" class="slider-val">180</span></label><div class="slider-row"><input type="range" id="sw" min="0" max="1000" value="180" step="10"></div></div>
+            </div>
+            <div class="tip-box">🎯 Production: low chaos preserves composition. Stylize 75 balances fidelity and polish.</div>
+          </div>
+          <div class="tab-panel" id="panel-explore">
+            <p style="font-size:0.8rem;color:var(--mid);margin-bottom:10px">Find a winning aesthetic before locking parameters.</p>
+            <button class="btn btn-ghost" id="btnExploreDefaults">Apply Explore Defaults</button>
+            <div class="tip-box" style="margin-top:10px">🔍 High chaos surfaces unexpected compositions. Use the winning seed in Variant 3.</div>
+          </div>
+          <div class="tab-panel" id="panel-lock">
+            <p style="font-size:0.8rem;color:var(--mid);margin-bottom:10px">Force Midjourney to respect your layout reference.</p>
+            <button class="btn btn-ghost" id="btnLockDefaults">Apply Layout Lock Defaults</button>
+            <div class="tip-box" style="margin-top:10px">📐 Minimum chaos, high image weight — reference adherence prioritized.</div>
+          </div>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-primary" id="btnGenerate">Generate 3 Variants</button>
+          <button class="btn btn-secondary" id="btnCatalog">4-Shot Catalog Set</button>
+        </div>
+      </div>
+    </div>
+    <div class="output-section">
+      <div class="card">
+        <div class="card-title">Generated Prompts</div>
+        <div id="output"><div class="empty-state"><div class="empty-icon">🌿</div><p>Configure your wreath above and click <strong>Generate 3 Variants</strong></p><p style="margin-top:6px;font-size:0.78rem;color:#bbb">Or drop an emotional brief at the top to auto-configure</p></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- COLLECTION BUILDER -->
+<div class="page-view" id="page-collection">
+  <div class="collection-page">
+    <div class="collection-header">
+      <h2>🌿 Collection Builder</h2>
+      <p>Design a coordinated wreath collection. Describe a vibe, drop in a story seed, or let Claude write a poetic narrative and derive every design decision — palette, florals, compositions — directly from the world it creates.</p>
+    </div>
+
+    <div class="collection-setup">
+      <div class="card">
+        <div class="card-title">Collection Identity</div>
+        <label>Collection Name</label>
+        <input type="text" id="collectionName" placeholder="e.g. The Hours Before the Garden Woke">
+        <label>Season / Territory</label>
+        <div class="pill-group" id="collectionSeasonPills">
+          <div class="pill active" data-val="spring">Spring</div><div class="pill" data-val="summer">Summer</div><div class="pill" data-val="autumn">Autumn</div><div class="pill" data-val="holiday">Holiday</div><div class="pill" data-val="winter">Winter</div><div class="pill" data-val="boho">Boho</div><div class="pill" data-val="transitional">Transitional</div>
+        </div>
+        <label>Number of Wreaths</label>
+        <div class="pill-group" id="collectionSizePills">
+          <div class="pill" data-val="3">3</div><div class="pill active" data-val="4">4</div><div class="pill" data-val="5">5</div><div class="pill" data-val="6">6</div>
+        </div>
+        <label>Layout Ref URL (shared across all wreaths)</label>
+        <input type="text" id="collectionRefUrl" placeholder="Paste your approved render URL">
+        <label>Shared Seed (optional)</label>
+        <input type="number" id="collectionSeed" placeholder="Leave blank for first run">
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          Collection Brief
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:0.68rem;color:var(--mid);text-transform:none;letter-spacing:0">Story Mode</span>
+            <label style="margin:0;position:relative;display:inline-block;width:36px;height:20px;cursor:pointer">
+              <input type="checkbox" id="storyModeToggle" style="opacity:0;width:0;height:0;position:absolute">
+              <span id="storyModeTrack" style="position:absolute;inset:0;background:var(--border);border-radius:20px;transition:0.2s;"></span>
+              <span id="storyModeThumb" style="position:absolute;left:3px;top:3px;width:14px;height:14px;background:white;border-radius:50%;transition:0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.2)"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- STANDARD MODE -->
+        <div id="standardModeFields">
+          <label>Describe your collection — feeling, season, story, any florals that inspire you</label>
+          <textarea id="collectionBrief" style="min-height:120px" placeholder="e.g. A quiet spring morning — soft, garden-gathered feeling. Peonies somewhere. Something with a blue tone. Not too precious, a little wild. Grapevine base, open and airy."></textarea>
+          <div class="tip-box" style="margin-top:10px">✦ <strong>Just describe the vibe.</strong> Claude chooses the palette, florals, and compositions using color theory, seasonal logic, and wreath design principles. Any floral you mention is a reference — not a constraint.</div>
+        </div>
+
+        <!-- STORY MODE -->
+        <div id="storyModeFields" style="display:none">
+          <label>Story Seed <span style="text-transform:none;letter-spacing:0;font-size:0.7rem;color:var(--faint)">— a feeling, a place, a memory, a moment</span></label>
+          <textarea id="storySeed" style="min-height:80px" placeholder="e.g. A garden in the hour just before the light shifts — everything still damp, the air holding the last of the night's coolness. The kind of morning you want to stay inside."></textarea>
+          <div id="storyDisplay" style="display:none;margin-top:14px">
+            <div style="font-size:0.68rem;letter-spacing:2px;text-transform:uppercase;color:var(--ai-accent);margin-bottom:8px">✦ Collection Story</div>
+            <div id="storyText" style="font-size:0.88rem;line-height:1.85;color:var(--mid);font-style:italic;padding:14px 16px;background:#f8f5f0;border-left:3px solid var(--accent);border-radius:0 6px 6px 0;white-space:pre-wrap"></div>
+            <div class="story-listen-bar">
+              <button class="btn btn-ghost" id="btnRewriteStory" style="font-size:0.75rem;padding:7px 14px">↺ Rewrite Story</button>
+              <button class="listen-btn" id="btnListenStory">
+                <span class="listen-icon">♪</span> Listen
+              </button>
+            </div>
+            <div class="audio-player-bar" id="audioPlayerBar">
+              <div class="ap-controls">
+                <button class="ap-btn" id="apPlay" title="Play / Pause">▶</button>
+                <button class="ap-btn" id="apStop" title="Stop">■</button>
+              </div>
+              <div class="ap-progress">
+                <input type="range" class="ap-seek" id="apSeek" min="0" max="100" value="0">
+                <span class="ap-time" id="apTime">0:00 / 0:00</span>
+              </div>
+              <select class="ap-voice-select" id="apVoice" title="Voice">
+                <option value="">Loading voices…</option>
+              </select>
+            </div>
+            <div id="apGenerating" style="display:none;margin-top:8px" class="ap-generating">✦ Generating audio with ElevenLabs…</div>
+          </div>
+          <div class="tip-box" style="margin-top:10px">✦ <strong>Story Mode.</strong> Claude writes a poetic narrative for your collection, then reads it like a brief — pulling colors, florals, compositions, and emotional arc directly from the world it created. Each wreath becomes a chapter.</div>
+        </div>
+
+        <div class="btn-group" style="margin-top:16px">
+          <button class="btn btn-ai" id="btnCollectionGenerate">
+            <span id="collAIIcon">✦</span><span id="collBtnText"> AI Design Full Collection</span>
+          </button>
+        </div>
+        <div class="coll-status" id="collectionStatus"></div>
+      </div>
+    </div>
+
+    <div class="section-label">Collection Wreaths</div>
+    <div class="collection-wreaths" id="collectionWreaths"></div>
+  </div>
+</div>
+
+
+<!-- LIFESTYLE PROMPT BUILDER -->
+<div class="page-view" id="page-lifestyle">
+<div class="ls-builder-page">
+
+  <div class="ls-hero">
+    <div class="ls-hero-inner">
+      <div class="ls-eyebrow">✦ Stage 2</div>
+      <h1 class="ls-title">Lifestyle Prompt Builder</h1>
+      <p class="ls-subtitle">Claude reads your collection story and writes six environmental scene prompts — pure architecture, light, and surface. No wreaths. These are the backgrounds your wreath renders will live in. Get the light right here, and everything else follows. Run them in Midjourney, upload the renders, then move to Stage 3.</p>
+    </div>
+    <div class="ls-status-bar" id="lsStatusBar">
+      <span class="ls-status-dot" id="lsStatusDot"></span>
+      <span id="lsStatusText">Waiting for collection story…</span>
+    </div>
+  </div>
+
+  <div class="ls-controls">
+    <div class="ls-controls-inner">
+      <div class="ls-field">
+        <label>Shared Seed <span style="font-weight:normal;text-transform:none;letter-spacing:0">(optional — leave blank to explore)</span></label>
+        <input type="text" id="lsSharedSeed" placeholder="e.g. 4829301572" style="width:200px">
+      </div>
+      <button class="ls-gen-btn" id="lsGenerate">
+        <span id="lsGenBtnText">✦ Generate Scene Prompts</span>
+      </button>
+    </div>
+    <div class="ls-tip" id="lsTip" style="display:none">These are pure environmental scenes — no wreaths, no objects. Run each one in Midjourney to build the architectural world your wreaths will inhabit. Upload each render below and they'll flow into your lookbook automatically.</div>
+  </div>
+
+  <div class="ls-cards-grid" id="lsCardsGrid">
+    <!-- populated by JS -->
+  </div>
+
+</div>
+</div>
+
+<!-- LOOKBOOK GENERATOR -->
+<div class="page-view" id="page-lookbook">
+<div class="lookbook-page">
+
+  <div class="lb-hero">
+    <div class="lb-hero-text">
+      <div class="lb-eyebrow">✦ Stage 3</div>
+      <h1 class="lb-title">Lookbook Generator</h1>
+      <p class="lb-subtitle">Once your wreaths and lifestyle renders are saved in the Collection Builder, generate a cinematic customer-facing lookbook — a standalone HTML page ready to embed in your site or share as a link.</p>
+    </div>
+    <div class="lb-checklist" id="lbChecklist">
+      <div class="lb-check-item" id="chk-collection"><span class="lb-check-icon">○</span> Collection name & story</div>
+      <div class="lb-check-item" id="chk-wreaths"><span class="lb-check-icon">○</span> Wreath renders saved</div>
+      <div class="lb-check-item" id="chk-lifestyle"><span class="lb-check-icon">○</span> Lifestyle renders (optional)</div>
+    </div>
+  </div>
+
+  <div class="lb-section">
+    <div class="lb-section-label">Lookbook Customisation</div>
+    <div class="lb-row">
+      <div class="lb-field">
+        <label>Brand Name</label>
+        <input type="text" id="lbBrand" placeholder="e.g. Evercrafted" value="Evercrafted">
+      </div>
+      <div class="lb-field">
+        <label>CTA Button Text</label>
+        <input type="text" id="lbCta" placeholder="e.g. Shop This Wreath" value="Shop This Wreath">
+      </div>
+    </div>
+    <div class="lb-row">
+      <div class="lb-field lb-field-full">
+        <label>CTA Link (optional)</label>
+        <input type="text" id="lbCtaLink" placeholder="https://yourshop.com or leave blank for #">
+      </div>
+    </div>
+    <div class="lb-row">
+      <div class="lb-field lb-field-full">
+        <label>Accent Colour (hex)</label>
+        <div style="display:flex;gap:10px;align-items:center">
+          <input type="color" id="lbAccentPicker" value="#4A6741" style="width:44px;height:32px;padding:0;border:none;border-radius:4px;cursor:pointer">
+          <input type="text" id="lbAccent" value="#4A6741" style="width:110px" placeholder="#4A6741">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="lb-section">
+    <div class="lb-section-label">Lifestyle Renders <span style="font-weight:normal;text-transform:none;letter-spacing:0;font-size:0.72rem;color:var(--faint);margin-left:8px">(optional — adds a cinematic scene gallery)</span></div>
+    <p style="font-size:0.78rem;color:var(--mid);margin-bottom:14px;line-height:1.6">Upload up to 6 lifestyle images — front door, interior, styled room scenes. These become a full cinematic gallery section in the lookbook with your collection story as backdrop.</p>
+    <div id="lifestyleUploadGrid" class="lifestyle-grid"></div>
+    <button class="lb-add-btn" id="lbAddLifestyle">+ Add Lifestyle Image</button>
+    <input type="file" id="lbLifestyleFileInput" accept="image/*" style="display:none">
+  </div>
+
+  <div class="lb-section">
+    <div class="lb-section-label">Preview & Export</div>
+    <div id="lbStatus" class="lb-status-idle">Ready — fill in details above then generate your lookbook.</div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:16px">
+      <button class="lb-btn-primary" id="lbGenerate">✦ Generate Lookbook</button>
+      <button class="lb-btn-ghost" id="lbPreview" style="display:none">Preview</button>
+      <button class="lb-btn-ghost" id="lbDownload" style="display:none">Download HTML</button>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- HOW TO -->
+<div class="page-view" id="page-howto">
+  <div class="howto-page">
+
+    <h1>How To Use This Studio</h1>
+    <p class="howto-subtitle">The complete pipeline — from single prompt to finished lookbook</p>
+
+    <!-- PIPELINE OVERVIEW -->
+    <div class="howto-pipeline">
+      <div class="pipeline-step"><div class="pipeline-icon">🌿</div><div class="pipeline-label">Studio</div><div class="pipeline-desc">Single wreath prompts</div></div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-step"><div class="pipeline-icon">✦</div><div class="pipeline-label">Collection Builder</div><div class="pipeline-desc">Full coordinated collection</div></div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-step"><div class="pipeline-icon">◎</div><div class="pipeline-label">Lifestyle Prompts</div><div class="pipeline-desc">Scene renders</div></div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-step"><div class="pipeline-icon">⬡</div><div class="pipeline-label">Lookbook</div><div class="pipeline-desc">Customer-ready page</div></div>
+    </div>
+
+    <!-- ═══════════ TAB 1: STUDIO ═══════════ -->
+    <div class="howto-tab-head">
+      <span class="howto-tab-badge">Tab 1</span>
+      <span class="howto-tab-name">Studio</span>
+      <span class="howto-tab-desc">Generate prompts for a single wreath — explore, lock, catalog</span>
+    </div>
+
+    <div class="section-label">Phase 1 — Find Your Direction</div>
+    <div class="step-block">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <div class="step-title">Configure your wreath specs</div>
+        <p>Fill in season, diameter, base type, form, composition, palette, foliage, florals, and accents. Or drop a feeling into the <strong>Emotional Brief</strong> banner and hit Configure — AI fills every field from the mood you described.</p>
+      </div>
+    </div>
+    <div class="step-block">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <div class="step-title">Leave Seed blank — click Generate 3 Variants — run Variant 1</div>
+        <p>Variant 1 is text-only, high chaos. This is your exploration pass. Paste it into Midjourney, evaluate all four outputs. You're looking for a direction, not a finished product. Expect 3–6 runs before something lands.</p>
+        <div class="step-note warn">No seed on the first run. It only matters after you've found a direction you love.</div>
+      </div>
+    </div>
+    <div class="step-block">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <div class="step-title">Use Vary Subtle when you're close</div>
+        <p>If an output is almost right — composition is good but palette drifted, or florals read right but light is off — use Vary Subtle in Midjourney. 2–3 passes max. If it still isn't landing, go back to fresh generation.</p>
+        <div class="step-note warn">Avoid Vary Strong early — it drifts significantly and can undo composition work you've found.</div>
+      </div>
+    </div>
+
+    <hr class="step-divider">
+    <div class="section-label">Phase 2 — Lock Your Reference</div>
+
+    <div class="step-block">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <div class="step-title">Copy the URL of the specific image you love</div>
+        <p>In Midjourney, click the individual image (not the grid), then copy its direct URL. This becomes your layout reference — it carries the exact compositional structure from that generation.</p>
+        <div class="step-note">Copy the single image URL, not the job URL. Click the image first, then copy from the address bar or right-click.</div>
+      </div>
+    </div>
+    <div class="step-block">
+      <div class="step-num">5</div>
+      <div class="step-body">
+        <div class="step-title">Paste into Layout Ref URL — switch to Layout Lock — run Variant 3</div>
+        <p>Paste the URL into <strong>Layout Ref URL</strong>. Click the <strong>Layout Lock</strong> tab in Parameter Tuning and hit Apply Layout Lock Defaults. Then Generate 3 Variants again — use <strong>Variant 3</strong> only. It applies your reference with locked parameters. The output should hold the structure of your reference while using your palette and florals.</p>
+      </div>
+    </div>
+
+    <hr class="step-divider">
+    <div class="section-label">Phase 3 — Production Catalog</div>
+
+    <div class="step-block">
+      <div class="step-num">6</div>
+      <div class="step-body">
+        <div class="step-title">Run the 4-Shot Catalog Set</div>
+        <p>When Variant 3 looks right, click <strong>4-Shot Catalog Set</strong>. This generates four prompts — hero front view, front door lifestyle, close-up detail, angled editorial — all inheriting your layout reference. Run all four and evaluate as a set.</p>
+        <div class="step-note"><strong>Shot 1 &amp; 4</strong> — most consistent. Primary product photos. <strong>Shot 2</strong> — mood shifts slightly with the new background but the wreath holds. <strong>Shot 3</strong> — composition irrelevant here. Purely about material and texture quality.</div>
+      </div>
+    </div>
+
+    <hr class="step-divider">
+
+    <!-- ═══════════ TAB 2: COLLECTION BUILDER ═══════════ -->
+    <div class="howto-tab-head">
+      <span class="howto-tab-badge">Tab 2</span>
+      <span class="howto-tab-name">Collection Builder</span>
+      <span class="howto-tab-desc">Design 3–6 coordinated wreaths from a brief or a story</span>
+    </div>
+
+    <div class="step-block">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <div class="step-title">Name your collection and choose a season and size</div>
+        <p>Give the collection a name — it flows into the lookbook title, the save file, and the assembly animation. Choose 3–6 wreaths. Optionally paste a shared layout reference URL if you want all prompts to inherit a compositional reference from the start.</p>
+      </div>
+    </div>
+    <div class="step-block">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <div class="step-title">Choose your brief mode — Standard or Story</div>
+        <p><strong>Standard mode:</strong> Describe the collection feeling, season, any florals that inspire you. Claude designs the full palette, floral hierarchy, and composition variation using color theory and seasonal logic.<br><br><strong>Story Mode:</strong> Give a memory, a place, a moment — Claude writes a poetic narrative first, then reads it like a design brief. Every sensory detail becomes a decision: light quality → palette temperature, textures → material choices, emotional arc → compositional progression. Each wreath becomes a chapter.</p>
+        <div class="step-note">Story Mode produces the most cohesive collections. The story also carries forward into Lifestyle Prompts and the Lookbook.</div>
+      </div>
+    </div>
+    <div class="step-block">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <div class="step-title">Generate — then name each wreath</div>
+        <p>Claude designs all wreaths at once and fills every slot with a name, focal flowers, accent color, and two prompts — Explore (high chaos, no reference) and Production Lock (with reference + seed). The wreath name is editable — click it and type yours. The name embeds into both prompts immediately.</p>
+        <div class="step-note warn">Name your wreaths before running them in Midjourney. The name becomes part of the prompt identity.</div>
+      </div>
+    </div>
+    <div class="step-block">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <div class="step-title">Run Explore prompts first — then lock with seeds</div>
+        <p>Copy each <strong>Phase 1 — Explore</strong> prompt into Midjourney. Find an output you love for each wreath. Copy that image's seed (from the Midjourney job details) and paste it into the slot's Seed field. The Production Lock prompt rebuilds automatically with the seed locked in.</p>
+      </div>
+    </div>
+    <div class="step-block">
+      <div class="step-num">5</div>
+      <div class="step-body">
+        <div class="step-title">Upload your final renders</div>
+        <p>Once you're happy with a wreath render, upload it to the slot using the Final Wreath upload zone. This image flows into the Lookbook gallery card and the assembly animation. Upload all wreaths before moving to Stage 2.</p>
+      </div>
+    </div>
+
+    <hr class="step-divider">
+
+    <!-- ═══════════ TAB 3: LIFESTYLE PROMPTS ═══════════ -->
+    <div class="howto-tab-head">
+      <span class="howto-tab-badge">Tab 3</span>
+      <span class="howto-tab-name">Lifestyle Prompts</span>
+      <span class="howto-tab-desc">Build the architectural world your wreaths will live in</span>
+    </div>
+
+    <div class="step-block">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <div class="step-title">Understand what these prompts are — and aren't</div>
+        <p>These are pure environmental scene prompts. No wreaths, no florals, no objects. Claude writes the light, the architecture, the surfaces — the world that belongs to your collection story. Your wreath renders get composited into the lookbook at the design stage. Midjourney's job here is just to nail the environment.</p>
+        <div class="step-note">This produces far better results than asking Midjourney to render a wreath in a scene. The scene can be perfect. Your wreath render is already perfect. They pair beautifully in the lookbook without either one fighting the other.</div>
+      </div>
+    </div>
+    <div class="step-block">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <div class="step-title">Click Generate Scene Prompts</div>
+        <p>Claude reads your collection story and writes six architectural scene prompts: Front Door, Entry Hall, Living Room, Kitchen Window, Garden Gate, and Surface Detail. Every prompt derives its light direction, surface materials, and atmospheric character directly from the world your story established — so all six scenes feel like they belong to the same house in the same moment.</p>
+        <div class="step-note warn">Story Mode produces the best results. The light quality, palette temperature, and material character all come from the narrative. Standard mode works but the scenes will be more generic.</div>
+      </div>
+    </div>
+    <div class="step-block">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <div class="step-title">Copy each prompt → run in Midjourney → upload the render</div>
+        <p>Use the Copy button on each card. Run in Midjourney. When you have a render you love, upload it to the card below the prompt. The image flows into the Lookbook lifestyle gallery automatically — no extra steps.</p>
+        <div class="step-note">Use <strong>✦ Refine</strong> on any card to push deeper into light specificity, surface material, and atmospheric precision. Refine never adds wreaths or objects — it only deepens what's already there.</div>
+      </div>
+    </div>
+    <div class="step-block">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <div class="step-title">Shared seed — optional cohesion tool</div>
+        <p>Paste a seed into the Shared Seed field before generating if you want all six scenes to share a consistent light quality and architectural mood. Leave blank to let each scene breathe on its own — sometimes a slightly different light in each room is exactly right.</p>
+      </div>
+    </div>
+
+    <hr class="step-divider">
+
+    <!-- ═══════════ TAB 4: LOOKBOOK ═══════════ -->
+    <div class="howto-tab-head">
+      <span class="howto-tab-badge">Tab 4</span>
+      <span class="howto-tab-name">✦ Lookbook</span>
+      <span class="howto-tab-desc">Generate the customer-facing page — ready to embed or share</span>
+    </div>
+
+    <div class="step-block">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <div class="step-title">Check the readiness checklist</div>
+        <p>The three indicators at the top of the tab tell you what's in place: collection name &amp; story, wreath renders, and lifestyle renders. You can generate a lookbook at any stage — missing renders just leave those slots empty. Come back and regenerate after adding more.</p>
+      </div>
+    </div>
+    <div class="step-block">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <div class="step-title">Fill in brand settings</div>
+        <p>Set your brand name, CTA button text (e.g. "Shop This Wreath"), CTA link (your shop URL or leave as #), and accent colour. The colour picker and hex field sync both ways.</p>
+      </div>
+    </div>
+    <div class="step-block">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <div class="step-title">Click Generate Lookbook</div>
+        <p>Claude writes a lyrical one-sentence caption for each wreath drawn from your collection story, then assembles the full HTML document. The lookbook includes: a cinematic hero with your story, animated assembly sequence, wreath gallery with captions and CTAs, lifestyle scene gallery, and a branded footer.</p>
+      </div>
+    </div>
+    <div class="step-block">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <div class="step-title">Preview — then Download</div>
+        <p><strong>Preview</strong> opens it in a new tab instantly so you can scroll through and evaluate. <strong>Download HTML</strong> saves a standalone file named after your collection. Drop it directly into your website, host it on any static server, or send it as a link. It has no external dependencies — everything is self-contained.</p>
+        <div class="step-note">The lookbook is a complete standalone HTML file. Your customer never sees the studio — just the finished editorial page.</div>
+      </div>
+    </div>
+
+    <hr class="step-divider">
+
+    <!-- ═══════════ SAVE / SESSIONS ═══════════ -->
+    <div class="howto-tab-head">
+      <span class="howto-tab-badge" style="background:var(--ai-accent)">⬇</span>
+      <span class="howto-tab-name">Save &amp; Sessions</span>
+      <span class="howto-tab-desc">Protect your work — save to any drive, restore any time</span>
+    </div>
+
+    <div class="step-block">
+      <div class="step-num">✦</div>
+      <div class="step-body">
+        <div class="step-title">Save to file — works on any drive</div>
+        <p>The <strong>⬇ Save</strong> button in the header exports your entire session as a <code>.json</code> file named after your collection. Save it to a thumb drive, Dropbox, a folder per collection — wherever you want. Everything is in the file: collection name, story, all prompts, seeds, render images (as base64), lifestyle prompts, lifestyle renders, and lookbook settings.</p>
+      </div>
+    </div>
+    <div class="step-block">
+      <div class="step-num">✦</div>
+      <div class="step-body">
+        <div class="step-title">Load any session — pick up exactly where you left off</div>
+        <p>The <strong>⬆ Load</strong> button opens a file picker. Select any session file and the full app state restores instantly — every field, every prompt, every image.</p>
+      </div>
+    </div>
+    <div class="step-block">
+      <div class="step-num">✦</div>
+      <div class="step-body">
+        <div class="step-title">Autosave — your safety net</div>
+        <p>Every change triggers a 3-second autosave to your browser's local storage. The header shows <em>● unsaved changes</em> in amber while it's pending, then <em>✓ saved</em> in green when it writes. If you close the tab accidentally and reopen the app, a banner appears with the collection name and time — one click restores everything.</p>
+        <div class="step-note warn">Autosave is a safety net, not a backup. Always save to file before closing the browser or clearing browser data.</div>
+      </div>
+    </div>
+    <div class="step-block">
+      <div class="step-num">✦</div>
+      <div class="step-body">
+        <div class="step-title">New Collection — clear with confidence</div>
+        <p>The <strong>✕ New</strong> button opens a confirmation before clearing anything. It clears the collection state only — Studio settings, lookbook branding, and your theme stay. Save to file first if you want to keep the current collection.</p>
+      </div>
+    </div>
+
+    <hr class="step-divider">
+
+    <!-- ═══════════ GENERAL NOTES ═══════════ -->
+    <div class="section-label">Notes &amp; Tips</div>
+
+    <div class="step-block">
+      <div class="step-num">✦</div>
+      <div class="step-body">
+        <div class="step-title">✦ AI Refine on any prompt</div>
+        <p>Every prompt — Studio variants, Collection slots, Lifestyle scenes — has an <strong>✦ AI Refine</strong> button. It deepens emotional language, sharpens clock-position descriptions, and adds material texture specificity, without touching any Midjourney parameters.</p>
+      </div>
+    </div>
+    <div class="step-block">
+      <div class="step-num">✦</div>
+      <div class="step-body">
+        <div class="step-title">Discord mode for --sref</div>
+        <p>The <strong>--sref</strong> style reference parameter is Discord-only — not available in the Midjourney web UI. Enable Discord Mode in Photography &amp; Setting only when working from the Discord bot. The app hides those fields by default.</p>
+      </div>
+    </div>
+    <div class="step-block">
+      <div class="step-num">✦</div>
+      <div class="step-body">
+        <div class="step-title">Reusing a layout reference across a collection</div>
+        <p>Once you find a reference image that consistently produces the right compositional structure, it can anchor your whole collection. Set it in the <strong>Collection Ref URL</strong> field in the Collection Builder — all Production Lock prompts inherit it. When palette and florals change between wreaths, the structure stays consistent.</p>
+      </div>
+    </div>
+    <div class="step-block">
+      <div class="step-num">✦</div>
+      <div class="step-body">
+        <div class="step-title">The pipeline is non-linear</div>
+        <p>You don't have to follow the tabs in order every time. Start a Studio run to test a palette before committing to a collection. Generate a lookbook mid-collection to see how it's looking. Upload lifestyle renders one at a time as you get them. The session autosaves every step.</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer>Evercrafted · Midjourney Prompt Studio · Luxury Faux Botanical</footer>
+
+<script>
+(function() {
+
+// ── CLAUDE PROXY ──
+// All Claude (Anthropic) calls go through a Supabase Edge Function that holds
+// the API key server-side. The browser never sees the key. To point this at a
+// different deployment, change the URL below (see supabase/functions/claude).
+var CLAUDE_PROXY_URL = 'https://qybnmlqesnbmgxayhllf.supabase.co/functions/v1/claude';
+
+// ── PAGE NAV ──
+function showPage(name) {
+  document.querySelectorAll('.page-view').forEach(function(p) { p.classList.remove('active'); });
+  document.querySelectorAll('.page-nav-btn').forEach(function(b) { b.classList.remove('active'); });
+  var page = document.getElementById('page-' + name);
+  var btn = document.querySelector('.page-nav-btn[data-page="' + name + '"]');
+  if (page) page.classList.add('active');
+  if (btn) btn.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+document.querySelectorAll('.page-nav-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() { showPage(btn.dataset.page); });
+});
+
+// ── INNER PARAMETER TABS ──
+document.querySelectorAll('.tab').forEach(function(tab) {
+  tab.addEventListener('click', function() {
+    var panelName = tab.dataset.panel;
+    tab.closest('.card').querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+    tab.closest('.card').querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+    tab.classList.add('active');
+    var panel = document.getElementById('panel-' + panelName);
+    if (panel) panel.classList.add('active');
+  });
+});
+
+// ── PILL GROUPS ──
+document.querySelectorAll('.pill-group').forEach(function(group) {
+  group.querySelectorAll('.pill').forEach(function(pill) {
+    pill.addEventListener('click', function() {
+      group.querySelectorAll('.pill').forEach(function(p) { p.classList.remove('active', 'ai-selected'); });
+      pill.classList.add('active');
+    });
+  });
+});
+
+function getActive(groupId) {
+  var el = document.querySelector('#' + groupId + ' .pill.active');
+  return el ? el.dataset.val : '';
+}
+function setActivePill(groupId, val) {
+  var group = document.getElementById(groupId);
+  if (!group) return;
+  group.querySelectorAll('.pill').forEach(function(p) {
+    p.classList.remove('active', 'ai-selected');
+    if (p.dataset.val === val) { p.classList.add('active', 'ai-selected'); }
+  });
+}
+
+// ── SLIDERS ──
+function wireSlider(id, valId, fmt) {
+  var el = document.getElementById(id);
+  var valEl = document.getElementById(valId);
+  if (!el || !valEl) return;
+  el.addEventListener('input', function() { valEl.textContent = fmt ? parseFloat(el.value).toFixed(1) : el.value; });
+}
+wireSlider('chaos','chaosVal',false); wireSlider('stylize','stylizeVal',false);
+wireSlider('iw','iwVal',true); wireSlider('sw','swVal',false);
+wireSlider('swDiscord','swDiscordVal',false);
+
+function setParams(chaos, stylize, iw, sw) {
+  document.getElementById('chaos').value = chaos; document.getElementById('chaosVal').textContent = chaos;
+  document.getElementById('stylize').value = stylize; document.getElementById('stylizeVal').textContent = stylize;
+  document.getElementById('iw').value = iw; document.getElementById('iwVal').textContent = parseFloat(iw).toFixed(1);
+  document.getElementById('sw').value = sw; document.getElementById('swVal').textContent = sw;
+}
+document.getElementById('btnExploreDefaults').addEventListener('click', function() { setParams(12,100,0.8,100); });
+document.getElementById('btnLockDefaults').addEventListener('click', function() { setParams(5,50,1.5,180); });
+
+// ── DISCORD MODE ──
+document.getElementById('discordMode').addEventListener('change', function() {
+  var on = this.checked;
+  document.getElementById('discordOnlyFields').style.display = on ? 'block' : 'none';
+  document.getElementById('discordBadge').style.display = on ? 'inline-block' : 'none';
+});
+
+// ── FIELD HELPERS ──
+function setField(id, val) {
+  var el = document.getElementById(id);
+  if (!el || !val) return;
+  el.value = val; el.classList.add('ai-filled');
+}
+function clearAIHighlights() {
+  document.querySelectorAll('.ai-filled').forEach(function(el) { el.classList.remove('ai-filled'); });
+  document.querySelectorAll('.ai-selected').forEach(function(el) { el.classList.remove('ai-selected'); });
+  document.querySelectorAll('.ai-filled-indicator').forEach(function(el) { el.classList.remove('visible'); });
+}
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── BUILD BASE PROMPT ──
+function buildBaseText() {
+  var diameter = document.getElementById('diameter').value;
+  var base = document.getElementById('baseType').value;
+  var form = getActive('formPills');
+  var season = getActive('seasonPills');
+  var composition = getActive('coveragePills');
+  var palette = document.getElementById('customPalette').value.trim() || getActive('palettePills');
+  var foliage = document.getElementById('foliage').value.trim();
+  var florals = document.getElementById('florals').value.trim();
+  var accents = document.getElementById('accents').value.trim();
+  var bg = getActive('bgPills');
+  var angle = getActive('anglePills');
+  return 'professional product photograph of a ' + diameter + ' inch luxury faux botanical ' + season + ' wreath on natural ' + base + ' base, ' + form + ', ' + composition + ', palette of ' + palette + ', botanicals: luxury faux ' + foliage + '; luxury faux ' + florals + '; accents: ' + accents + ', matte silk petals with firm edges and visible textile microfibers, semi-gloss foliage (silk not plastic), structured botanical stems, NO plastic shine, NO dewy or moist cues, NO artificial glow, museum-quality luxury faux florals, macro botanical realism, ' + bg + ', ' + angle + ', side-lit natural daylight (12-2pm), soft diffused shadows, 85mm f/3.5 lens, crisp focus, entire wreath fully visible, minimal distortion';
+}
+
+function getParams() {
+  return {
+    chaos: document.getElementById('chaos').value,
+    s: document.getElementById('stylize').value,
+    iw: parseFloat(document.getElementById('iw').value).toFixed(1),
+    sw: document.getElementById('sw').value,
+    seed: document.getElementById('seed').value,
+    ar: document.getElementById('ar').value,
+    blueprint: document.getElementById('blueprintUrl').value.trim(),
+    hero: document.getElementById('heroUrl').value.trim()
+  };
+}
+
+function buildV1(p, text) {
+  return '/imagine ' + text + ' --ar ' + p.ar + ' --style raw --chaos 12 --s 100' + (p.seed ? ' --seed ' + p.seed : '');
+}
+function buildV2(p, text) {
+  var prefix = p.blueprint ? p.blueprint + ' ' : '';
+  return '/imagine ' + prefix + text + ' --iw 1.5 --ar ' + p.ar + ' --style raw --chaos 5 --s 50' + (p.seed ? ' --seed ' + p.seed : '');
+}
+function buildV3(p, text) {
+  var discord = document.getElementById('discordMode').checked;
+  if (discord) {
+    var srefUrl = document.getElementById('srefUrl').value.trim();
+    var sw = document.getElementById('swDiscord').value;
+    var prefix = p.blueprint ? p.blueprint + ' ' : '';
+    var srefPart = srefUrl ? ' --sref ' + srefUrl + ' --sw ' + sw + ' --sv 4' : '';
+    return '/imagine ' + prefix + text + srefPart + ' --iw ' + p.iw + ' --ar ' + p.ar + ' --style raw --chaos ' + p.chaos + ' --s ' + p.s + (p.seed ? ' --seed ' + p.seed : '');
+  } else {
+    var bwPart = p.hero ? p.hero + ' ' : '';
+    var prefix2 = p.blueprint ? p.blueprint + ' ' : '';
+    return '/imagine ' + bwPart + prefix2 + text + ' --iw ' + p.iw + ' --ar ' + p.ar + ' --style raw --chaos ' + p.chaos + ' --s ' + p.s + (p.seed ? ' --seed ' + p.seed : '');
+  }
+}
+
+// ── COPY PROMPT ──
+function copyPrompt(btn) {
+  var block = btn.closest('.prompt-wrap').querySelector('.prompt-block');
+  navigator.clipboard.writeText(block.textContent).then(function() {
+    btn.textContent = '✓ Copied'; btn.classList.add('copied');
+    setTimeout(function() { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2200);
+  });
+}
+window.copyPrompt = copyPrompt;
+
+// ── GENERATE 3 VARIANTS ──
+function generatePrompts(suppressScroll) {
+  var p = getParams();
+  var text = buildBaseText();
+  var discord = document.getElementById('discordMode').checked;
+  var labels = [
+    { key: 'v1', color: '#a5d6a7', title: 'VARIANT 1 — Style Exploration (Text Only)', build: function() { return buildV1(p, text); } },
+    { key: 'v2', color: '#80cbc4', title: 'VARIANT 2 — Composition Lock (Blueprint + Text)', build: function() { return buildV2(p, text); } },
+    { key: 'v3', color: '#c8a96e', title: discord ? 'VARIANT 3 — Discord: sref Style Lock' : 'VARIANT 3 — Web UI: Layout Reference Lock', build: function() { return buildV3(p, text); } }
+  ];
+  var html = '<div class="tag-row"><span class="tag tag-green">✓ Luxury Faux Only</span><span class="tag tag-green">✓ --style raw</span><span class="tag tag-red">✗ No fresh/real florals</span></div>';
+  labels.forEach(function(item) {
+    var prompt = item.build();
+    html += '<div class="prompt-wrap" id="wrap-' + item.key + '"><div class="prompt-header"><span class="prompt-label" style="color:' + item.color + '">' + item.title + '</span><div class="prompt-actions"><button class="refine-btn" onclick="refinePrompt(\'' + item.key + '\')">✦ AI Refine</button><button class="copy-btn" onclick="copyPrompt(this)">Copy</button></div></div><div class="prompt-block" id="block-' + item.key + '">' + escapeHtml(prompt) + '</div></div>';
+  });
+  html += '<div class="tip-box">💡 Start with Variant 1 — leave Seed blank. Once you find an output you love, copy that specific image URL from Midjourney and paste into Layout Ref URL. Switch to Layout Lock, run Variant 3. When it lands, run the 4-Shot Catalog Set. See the <strong>How To</strong> tab for the full walkthrough.</div>';
+  document.getElementById('output').innerHTML = html;
+  if (!suppressScroll) document.getElementById('output').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+document.getElementById('btnGenerate').addEventListener('click', function() { generatePrompts(false); });
+
+// ── 4-SHOT CATALOG ──
+function generateCatalogSet() {
+  var p = getParams();
+  var text = buildBaseText();
+  var shots = [
+    { key: 'c1', color: '#a5d6a7', title: 'SHOT 1 — Hero Front View', bg: 'neutral plaster background', angle: 'flat-lay straight-on product view, entire wreath fully visible', ar: '4:5' },
+    { key: 'c2', color: '#80cbc4', title: 'SHOT 2 — Lifestyle (Front Door)', bg: 'hanging on a dark stained wooden front door with black hardware, natural outdoor daylight', angle: 'straight-on at eye level', ar: '4:5' },
+    { key: 'c3', color: '#c8a96e', title: 'SHOT 3 — Close-Up Detail', bg: 'neutral plaster background', angle: 'macro close-up detail of the lower floral cluster, shallow depth of field, creamy bokeh background', ar: '3:2' },
+    { key: 'c4', color: '#b0a8e0', title: 'SHOT 4 — Angled Editorial', bg: 'luxury interior setting with soft ambient light', angle: 'slight 18 degree angle to show depth and dimension, full wreath visible', ar: '4:5' }
+  ];
+  var html = '<div class="tag-row"><span class="tag tag-green">✓ 4-Shot Catalog Set</span><span class="tag tag-green">✓ Layout ref on all shots</span></div>';
+  shots.forEach(function(shot) {
+    var bwPart = p.hero ? p.hero + ' ' : '';
+    var t2 = text.replace('neutral plaster background', shot.bg).replace('flat-lay straight-on product view, entire wreath fully visible, minimal distortion', shot.angle);
+    var prompt = '/imagine ' + bwPart + t2 + ' --iw 1.5 --ar ' + shot.ar + ' --style raw --chaos 5 --s 50' + (p.seed ? ' --seed ' + p.seed : '');
+    html += '<div class="prompt-wrap" id="wrap-' + shot.key + '"><div class="prompt-header"><span class="prompt-label" style="color:' + shot.color + '">' + shot.title + '</span><div class="prompt-actions"><button class="refine-btn" onclick="refinePrompt(\'' + shot.key + '\')">✦ AI Refine</button><button class="copy-btn" onclick="copyPrompt(this)">Copy</button></div></div><div class="prompt-block" id="block-' + shot.key + '">' + escapeHtml(prompt) + '</div></div>';
+  });
+  document.getElementById('output').innerHTML = html;
+  document.getElementById('output').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+document.getElementById('btnCatalog').addEventListener('click', generateCatalogSet);
+
+// ── AI REFINE ──
+async function refinePrompt(key) {
+  var block = document.getElementById('block-' + key);
+  var btn = document.getElementById('wrap-' + key) ? document.getElementById('wrap-' + key).querySelector('.refine-btn') : null;
+  if (!block || !btn) return;
+  var original = block.textContent;
+  btn.disabled = true; btn.textContent = '✦ Refining…';
+  var overlay = document.createElement('div');
+  overlay.className = 'loading-overlay';
+  overlay.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(200,232,194,0.2);border-top-color:#c8e8c2;border-radius:50%;animation:spin 0.6s linear infinite"></span><span>Deepening emotional language…</span>';
+  block.style.position = 'relative'; block.appendChild(overlay);
+  try {
+    var res = await fetch(CLAUDE_PROXY_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1000, system: 'You are Evercrafted\'s prompt refinement engine. Return ONLY the revised /imagine prompt. Preserve ALL Midjourney parameters exactly. Add 2-4 evocative material descriptors. Tighten clock-position placement language. Remove generic phrasing. No preamble.', messages: [{ role: 'user', content: 'Refine:\n\n' + original }] }) });
+    var data = await res.json();
+    block.removeChild(overlay); block.textContent = data.content[0].text.trim();
+    block.style.background = '#101e20'; block.style.borderLeft = '3px solid rgba(139,127,212,0.6)';
+    btn.textContent = '✦ Refined'; btn.style.color = '#80c8a4';
+    setTimeout(function() { btn.disabled = false; btn.textContent = '✦ AI Refine'; btn.style.color = ''; }, 3000);
+  } catch(e) { if(block.contains(overlay)) block.removeChild(overlay); btn.disabled = false; btn.textContent = '✦ AI Refine'; }
+}
+window.refinePrompt = refinePrompt;
+
+// ── AI BRIEF ──
+document.getElementById('aiBriefBtn').addEventListener('click', async function() {
+  var brief = document.getElementById('aiBriefInput').value.trim();
+  if (!brief) { setAIStatus('Enter a brief first.','error'); return; }
+  var btn = this;
+  btn.disabled = true;
+  document.getElementById('briefBtnIcon').innerHTML = '<span style="display:inline-block;width:12px;height:12px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 0.6s linear infinite"></span>';
+  document.getElementById('briefBtnText').textContent = 'Reading…';
+  setAIStatus('Interpreting brief…','');
+  var sys = 'You are Evercrafted\'s emotional design engine. Translate a brief into wreath parameters. RESPOND ONLY WITH VALID JSON, no markdown. Schema: {"season":"summer|spring|autumn|holiday|boho|farmhouse|modern minimal|winter","diameter":"12|14|16|18|20|24|26|28|30","baseType":"grapevine|foam ring|thin gold metal hoop|thin black metal hoop|wire frame|cedar or pine base","form":"full 360 degree ring|incomplete circular form with intentional asymmetry|full and lush, layered depth|low profile and flat|open airy form, minimal material, maximized negative space","composition":"dominant botanical mass from 2 to 7 o\'clock, open and bare from 8 to 1 o\'clock, 15-22% natural base visible, controlled negative space|evenly distributed florals around the full ring, balanced 360 degree coverage|crescent composition, dense florals wrapping lower right to upper right, bare vine on left side|large floral cluster at the bottom center, light airy greenery around the rest of the ring|side swag composition, heavy florals sweeping from upper left to lower left, open on right|half moon composition, dense botanicals along the lower half, bare and open on the upper half|corner-weighted top-right cluster with diagonal movement toward lower-left, significant open base","customPalette":"string","foliage":"string","florals":"string","accents":"string","background":"neutral plaster background|clean white studio background|luxury interior setting with soft ambient light|hanging on a dark stained wooden front door with black hardware, natural outdoor daylight|rustic weathered garden gate, natural light|pale sage linen wall, warm morning light, editorial lifestyle setting","angle":"flat-lay straight-on product view, entire wreath fully visible, minimal distortion|slight 15 degree angle to show depth and dimension|macro close-up detail of lower cluster, shallow depth of field, creamy bokeh background|three-quarter angle showing both depth and full form","designRationale":"string"} RULES: Never cherry blossom/pussy willow/twig blossoms. Faux only. Let emotion guide every parameter.';
+  try {
+    var res = await fetch(CLAUDE_PROXY_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:1000, system:sys, messages:[{role:'user',content:'Brief: "'+brief+'"'}] }) });
+    var data = await res.json();
+    var config = JSON.parse(data.content[0].text.replace(/```json|```/g,'').trim());
+    applyAIConfig(config);
+    setAIStatus('✦ ' + config.designRationale, 'success');
+    document.getElementById('briefBtnText').textContent = 'Reconfigure';
+    document.getElementById('briefBtnIcon').textContent = '✦';
+    btn.disabled = false;
+  } catch(e) {
+    setAIStatus('Something went wrong.','error');
+    document.getElementById('briefBtnIcon').textContent = '✦';
+    document.getElementById('briefBtnText').textContent = 'Configure';
+    btn.disabled = false;
+  }
+});
+
+function applyAIConfig(config) {
+  clearAIHighlights();
+  var pills = { seasonPills: config.season, formPills: config.form, coveragePills: config.composition, bgPills: config.background, anglePills: config.angle };
+  Object.entries(pills).forEach(function(kv) { if (kv[1]) setActivePill(kv[0], kv[1]); });
+  if (config.diameter) { var s = document.getElementById('diameter'); Array.from(s.options).forEach(function(o) { if (o.value===String(config.diameter)||o.textContent.trim()===String(config.diameter)) { o.selected=true; s.classList.add('ai-filled'); } }); }
+  if (config.baseType) { var s2 = document.getElementById('baseType'); Array.from(s2.options).forEach(function(o) { if (o.value===config.baseType) { o.selected=true; s2.classList.add('ai-filled'); } }); }
+  setField('customPalette',config.customPalette); setField('foliage',config.foliage); setField('florals',config.florals); setField('accents',config.accents);
+  document.getElementById('ind-specs').classList.add('visible'); document.getElementById('ind-palette').classList.add('visible');
+  setTimeout(function() { generatePrompts(true); }, 300);
+}
+
+function setAIStatus(msg, type) {
+  var el = document.getElementById('aiStatus'); el.textContent = msg;
+  el.className = 'ai-status' + (type ? ' ' + type : '');
+}
+
+// ── COLLECTION BUILDER ──
+function initCollectionSlots() {
+  var count = parseInt(getActive('collectionSizePills')) || 4;
+  var container = document.getElementById('collectionWreaths');
+  container.innerHTML = '';
+  for (var i = 1; i <= count; i++) {
+    var div = document.createElement('div');
+    div.className = 'wreath-slot';
+    div.id = 'slot-' + i;
+    div.innerHTML = `
+      <div class="wreath-slot-header">
+        <span class="wreath-slot-num">Wreath ${i}</span>
+        <input type="text" class="wreath-slot-name-input" id="slot-title-${i}" placeholder="Name this wreath…" autocomplete="off">
+      </div>
+      <label>Focal Flower(s)</label>
+      <input type="text" id="slot-florals-${i}" placeholder="e.g. blush peonies, ivory ranunculus">
+      <label>Accent Color</label>
+      <input type="text" id="slot-accent-${i}" placeholder="e.g. dusty rose">
+
+      <div style="height:1px;background:var(--border-light);margin:12px 0"></div>
+
+      <label style="color:var(--green-dark);font-weight:bold">Seed <span style="font-weight:normal;color:var(--faint);text-transform:none;letter-spacing:0;font-size:0.68rem">— paste after explore run</span></label>
+      <input type="number" id="slot-seed-${i}" placeholder="Leave blank for first run">
+
+      <div style="margin-top:12px">
+        <div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:2px;color:#a5d6a7;margin-bottom:6px">Phase 1 — Explore</div>
+        <div class="wreath-slot-prompt" id="slot-explore-${i}">Generate collection to see prompt</div>
+        <div class="wreath-slot-actions" style="margin-top:6px">
+          <button class="slot-btn slot-btn-copy" id="slot-copy-explore-${i}">Copy</button>
+          <button class="slot-btn slot-btn-ai" id="slot-ai-explore-${i}">✦ Refine</button>
+        </div>
+      </div>
+
+      <div style="margin-top:12px">
+        <div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:2px;color:#c8a96e;margin-bottom:6px">Phase 3 — Production Lock</div>
+        <div class="wreath-slot-prompt" id="slot-prompt-${i}">Paste seed above then regenerate</div>
+        <div class="wreath-slot-actions" style="margin-top:6px">
+          <button class="slot-btn slot-btn-copy" id="slot-copy-prod-${i}">Copy</button>
+          <button class="slot-btn slot-btn-ai" id="slot-ai-prod-${i}">✦ Refine</button>
+        </div>
+      </div>
+
+      <div style="height:1px;background:var(--border-light);margin:12px 0"></div>
+
+      <div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:2px;color:var(--green-light);margin-bottom:8px">Final Wreath</div>
+      <div id="slot-upload-zone-${i}" style="border:2px dashed var(--border);border-radius:7px;padding:14px;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--ivory)" onclick="document.getElementById('slot-file-${i}').click()">
+        <div id="slot-upload-preview-${i}" style="display:none;margin-bottom:8px">
+          <img id="slot-img-${i}" style="width:100%;border-radius:5px;max-height:180px;object-fit:cover" src="" alt="Final wreath">
+        </div>
+        <div id="slot-upload-placeholder-${i}">
+          <div style="font-size:1.2rem;margin-bottom:4px">🌿</div>
+          <div style="font-size:0.75rem;color:var(--faint)">Upload final render</div>
+        </div>
+        <input type="file" id="slot-file-${i}" accept="image/*" style="display:none">
+      </div>`;
+
+    container.appendChild(div);
+
+    // Wire all buttons for this slot
+    (function(idx) {
+      // Explore copy
+      document.getElementById('slot-copy-explore-'+idx).addEventListener('click', function() {
+        copySlotBlock('slot-explore-'+idx, this);
+      });
+      // Production copy
+      document.getElementById('slot-copy-prod-'+idx).addEventListener('click', function() {
+        copySlotBlock('slot-prompt-'+idx, this);
+      });
+      // Explore refine
+      document.getElementById('slot-ai-explore-'+idx).addEventListener('click', function() {
+        refineSlotPrompt('slot-explore-'+idx, this);
+      });
+      // Production refine
+      document.getElementById('slot-ai-prod-'+idx).addEventListener('click', function() {
+        refineSlotPrompt('slot-prompt-'+idx, this);
+      });
+      // Image upload
+      document.getElementById('slot-file-'+idx).addEventListener('change', function(e) {
+        var file = e.target.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function(ev) {
+          document.getElementById('slot-img-'+idx).src = ev.target.result;
+          document.getElementById('slot-upload-preview-'+idx).style.display = 'block';
+          document.getElementById('slot-upload-placeholder-'+idx).style.display = 'none';
+          document.getElementById('slot-upload-zone-'+idx).style.borderColor = 'var(--green-light)';
+          document.getElementById('slot-upload-zone-'+idx).style.borderStyle = 'solid';
+          // Store base64 on the element for later use
+          document.getElementById('slot-img-'+idx).dataset.base64 = ev.target.result.split(',')[1];
+          document.getElementById('slot-img-'+idx).dataset.mediaType = file.type;
+        };
+        reader.readAsDataURL(file);
+      });
+      // Seed field → auto-rebuild production prompt
+      document.getElementById('slot-seed-'+idx).addEventListener('input', function() {
+        rebuildProductionPrompt(idx);
+      });
+      // Title input → inject name into both prompts on change
+      document.getElementById('slot-title-'+idx).addEventListener('input', function() {
+        injectNameIntoPrompts(idx);
+        scheduleAutosave();
+      });
+    })(i);
+  }
+
+  document.querySelectorAll('#collectionSizePills .pill').forEach(function(p) {
+    p.addEventListener('click', function() { setTimeout(initCollectionSlots, 60); });
+  });
+}
+
+function copySlotBlock(blockId, btn) {
+  var block = document.getElementById(blockId);
+  if (!block) return;
+  navigator.clipboard.writeText(block.textContent).then(function() {
+    btn.textContent = '✓ Copied'; btn.classList.add('copied');
+    setTimeout(function() { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2200);
+  });
+}
+
+async function refineSlotPrompt(blockId, btn) {
+  var block = document.getElementById(blockId);
+  if (!block || !btn) return;
+  var original = block.textContent;
+  if (!original || original.includes('Generate collection') || original.includes('Paste seed')) return;
+  btn.disabled = true; btn.textContent = '✦ Refining…';
+  try {
+    var res = await fetch(CLAUDE_PROXY_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:1000, system:'Return ONLY the revised /imagine prompt. Preserve ALL Midjourney parameters exactly. Deepen emotional language, add material texture descriptors, tighten placement language. No preamble.', messages:[{role:'user',content:'Refine:\n\n'+original}] }) });
+    var data = await res.json();
+    block.textContent = data.content[0].text.trim();
+    block.style.borderLeft = '3px solid rgba(139,127,212,0.6)';
+    btn.textContent = '✦ Refined'; btn.style.color = '#80c8a4';
+    setTimeout(function() { btn.disabled = false; btn.textContent = '✦ Refine'; btn.style.color = ''; }, 3000);
+  } catch(e) { btn.disabled = false; btn.textContent = '✦ Refine'; }
+}
+
+// stored wreath data for prompt rebuilding
+var _slotData = {};
+
+function injectNameIntoPrompts(idx) {
+  var d = _slotData[idx];
+  if (!d) return;
+  var nameEl = document.getElementById('slot-title-' + idx);
+  var name   = nameEl ? nameEl.value.trim() : '';
+  var namedBase = name
+    ? d.baseText.replace('professional product photograph of a 24 inch luxury faux botanical',
+        'professional product photograph of a 24 inch luxury faux botanical wreath titled "' + name + '",')
+    : d.baseText;
+  var exploreEl = document.getElementById('slot-explore-' + idx);
+  if (exploreEl && exploreEl.textContent && exploreEl.textContent !== 'Generate collection to see prompt') {
+    exploreEl.textContent = '/imagine ' + namedBase + ' --ar 4:5 --style raw --chaos 12 --s 100';
+  }
+  rebuildProductionPrompt(idx, namedBase);
+}
+
+function rebuildProductionPrompt(idx, overrideBase) {
+  var d = _slotData[idx];
+  if (!d) return;
+  var nameEl = document.getElementById('slot-title-' + idx);
+  var name   = nameEl ? nameEl.value.trim() : '';
+  var base   = overrideBase || (name
+    ? d.baseText.replace('professional product photograph of a 24 inch luxury faux botanical',
+        'professional product photograph of a 24 inch luxury faux botanical wreath titled "' + name + '",')
+    : d.baseText);
+  var seed     = document.getElementById('slot-seed-'+idx).value.trim();
+  var refUrl   = document.getElementById('collectionRefUrl').value.trim();
+  var refPart  = refUrl ? refUrl + ' ' : '';
+  var seedPart = seed ? ' --seed ' + seed : '';
+  var prod = '/imagine ' + refPart + base + ' --iw 1.5 --ar 4:5 --style raw --chaos 5 --s 50' + seedPart;
+  var block = document.getElementById('slot-prompt-'+idx);
+  if (block) block.textContent = prod;
+}
+
+// ── STORY MODE TOGGLE ──
+var _collectionStory = '';
+var _lastStorySeed = '';
+
+var storyToggle = document.getElementById('storyModeToggle');
+storyToggle.addEventListener('change', function() {
+  var on = this.checked;
+  document.getElementById('standardModeFields').style.display = on ? 'none' : 'block';
+  document.getElementById('storyModeFields').style.display = on ? 'block' : 'none';
+  document.getElementById('collBtnText').textContent = on ? ' Write Story & Design Collection' : ' AI Design Full Collection';
+  document.getElementById('storyModeTrack').style.background = on ? 'var(--ai-accent)' : 'var(--border)';
+  document.getElementById('storyModeThumb').style.transform = on ? 'translateX(16px)' : 'translateX(0)';
+});
+
+document.getElementById('btnRewriteStory').addEventListener('click', async function() {
+  var seedVal = document.getElementById('storySeed').value.trim();
+  if (!seedVal) return;
+  this.textContent = '↺ Rewriting…'; this.disabled = true;
+  try {
+    _collectionStory = await generateStory(seedVal, getActive('collectionSeasonPills'), parseInt(getActive('collectionSizePills'))||4);
+    document.getElementById('storyText').textContent = _collectionStory;
+  } catch(e) { console.error(e); }
+  this.textContent = '↺ Rewrite Story'; this.disabled = false;
+});
+
+async function generateStory(seedVal, season, count) {
+  var sys = 'You are Evercrafted\'s narrative engine. Write a short poetic collection story — 3 to 5 paragraphs — for a luxury faux botanical wreath collection. The story should feel like the opening pages of a beautiful design book: evocative, sensory, unhurried. Establish a place, a light quality, a mood, and a sense of time or a moment held still. Weave in specific sensory details — colors as they appear in nature, textures, the weight of air, the quality of light. These become the raw material for palette, floral, and composition decisions later. Do not mention wreaths or florals directly. Write in present tense. Return only the story text — no title, no preamble.';
+  var res = await fetch(CLAUDE_PROXY_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:700, system:sys, messages:[{role:'user',content:'Write a collection story for a '+season+' wreath collection ('+count+' pieces) from this seed:\n\n"'+seedVal+'"'}] }) });
+  var data = await res.json();
+  return data.content[0].text.trim();
+}
+
+document.getElementById('btnCollectionGenerate').addEventListener('click', async function() {
+  var btn = this;
+  var icon = document.getElementById('collAIIcon');
+  var statusEl = document.getElementById('collectionStatus');
+  var isStoryMode = document.getElementById('storyModeToggle').checked;
+  var name = document.getElementById('collectionName').value.trim() || 'Untitled Collection';
+  var season = getActive('collectionSeasonPills');
+  var count = parseInt(getActive('collectionSizePills')) || 4;
+  var refUrl = document.getElementById('collectionRefUrl').value.trim();
+  var seedVal = document.getElementById('collectionSeed').value.trim();
+
+  btn.disabled = true;
+  icon.innerHTML = '<span style="display:inline-block;width:12px;height:12px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 0.6s linear infinite"></span>';
+  statusEl.className = 'coll-status';
+
+  var brief = '';
+
+  if (isStoryMode) {
+    var storySeedInput = document.getElementById('storySeed').value.trim();
+    if (!storySeedInput && !_collectionStory) {
+      statusEl.textContent = 'Enter a story seed first.';
+      statusEl.className = 'coll-status error';
+      btn.disabled = false; icon.textContent = '✦'; return;
+    }
+    if (!_collectionStory || storySeedInput !== _lastStorySeed) {
+      statusEl.textContent = 'Writing collection story…';
+      try {
+        _collectionStory = await generateStory(storySeedInput, season, count);
+        _lastStorySeed = storySeedInput;
+      } catch(e) {
+        statusEl.textContent = 'Story generation failed.';
+        statusEl.className = 'coll-status error';
+        btn.disabled = false; icon.textContent = '✦'; return;
+      }
+    }
+    document.getElementById('storyText').textContent = _collectionStory;
+    document.getElementById('storyDisplay').style.display = 'block';
+    brief = 'COLLECTION STORY — read this as your design brief. Derive all palette, floral, and composition decisions from the world described here. Every sensory detail is a design instruction:\n\n' + _collectionStory;
+    statusEl.textContent = 'Translating story into wreath designs…';
+  } else {
+    brief = document.getElementById('collectionBrief').value.trim() || 'A coordinated seasonal collection.';
+    statusEl.textContent = 'Designing ' + count + ' coordinated wreaths…';
+  }
+
+  var storyInstruction = isStoryMode
+    ? 'You are in STORY MODE. You have been given a poetic narrative as your design brief. Read it the way a designer reads a mood board — every color mentioned, every texture, every quality of light, every emotional register is a design instruction. Translate the story\'s world directly into botanical decisions: the light quality becomes palette temperature, textures become material choices, the emotional arc becomes the compositional progression across the collection. Each wreath is a chapter of the story.'
+    : 'Use color wheel relationships (analogous, complementary, split-complementary), seasonal logic, floral symbolism, scale variation, and wreath design fundamentals. Any florals mentioned are references, not constraints.';
+
+  var sys = 'You are Evercrafted\'s collection design intelligence engine — color theorist, botanical designer, and wreath construction expert. Design a complete coordinated collection of ' + count + ' luxury faux botanical wreaths.\n\n' + storyInstruction + '\n\nRESPOND ONLY WITH VALID JSON. No markdown, no backticks.\n\nSchema: {"collectionRationale":"2-3 sentences on design logic and color story","sharedFoundation":"foliage and base palette threading through every wreath","colorStrategy":"color approach used","storyConnection":"(story mode only) how the story world translated into this design system","wreaths":[{"number":1,"name":"poetic title","accentColor":"this wreath\'s accent","focalFlowers":"PRIMARY florals — different per wreath","foliage":"2 species max","accents":"restrained fillers","composition":"exact composition string","palette":"dominant colors + accent + NO exclusions","emotionalNote":"1 sentence on this wreath\'s distinct character","scale":"statement|mid|accent"}]}\n\nComposition options:\n- dominant botanical mass from 2 to 7 o\'clock, open and bare from 8 to 1 o\'clock, 15-22% natural base visible, controlled negative space\n- crescent composition, dense florals wrapping lower right to upper right, bare vine on left side\n- large floral cluster at the bottom center, light airy greenery around the rest of the ring\n- side swag composition, heavy florals sweeping from upper left to lower left, open on right\n- half moon composition, dense botanicals along the lower half, bare and open on the upper half\n- corner-weighted top-right cluster with diagonal movement toward lower-left, significant open base\n\nRULES: Different focal flowers per wreath. Vary compositions. Statement/mid/accent scale hierarchy. Never cherry blossom/pussy willow/twig blossoms. Faux only. Palette strings need NO exclusions. Colors coordinate but have individual character.';
+
+  var msg = 'Collection: "'+name+'"\nSeason: '+season+'\nCount: '+count+'\n\n'+brief;
+
+  try {
+    var res = await fetch(CLAUDE_PROXY_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:2500, system:sys, messages:[{role:'user',content:msg}] }) });
+    var data = await res.json();
+    var result = JSON.parse(data.content[0].text.replace(/```json|```/g,'').trim());
+    var statusMsg = '✦ ' + result.collectionRationale;
+    if (result.storyConnection) statusMsg += ' · ' + result.storyConnection;
+    statusEl.textContent = statusMsg;
+    statusEl.className = 'coll-status success';
+    result.wreaths.forEach(function(w) {
+      var i = w.number;
+      var titleEl = document.getElementById('slot-title-'+i);
+      var floralsEl = document.getElementById('slot-florals-'+i);
+      var accentEl = document.getElementById('slot-accent-'+i);
+      if (titleEl) titleEl.value = w.name;
+      if (floralsEl) floralsEl.value = w.focalFlowers;
+      if (accentEl) accentEl.value = w.accentColor;
+
+      var baseText = 'professional product photograph of a 24 inch luxury faux botanical '+season+' wreath on natural grapevine base, incomplete circular form with intentional asymmetry, '+w.composition+', palette of '+w.palette+', botanicals: luxury faux '+w.foliage+'; luxury faux '+w.focalFlowers+'; accents: '+w.accents+', matte silk petals with firm edges and visible textile microfibers, semi-gloss foliage (silk not plastic), NO plastic shine, NO artificial glow, museum-quality luxury faux florals, macro botanical realism, neutral plaster background, flat-lay straight-on product view, entire wreath fully visible, side-lit natural daylight (12-2pm), 85mm f/3.5 lens, crisp focus';
+
+      // Store for seed-triggered rebuild
+      _slotData[i] = { baseText: baseText };
+
+      // Phase 1 — Explore prompt (text only, high chaos, no seed, no ref)
+      var wrName = w.name || '';
+      var namedBase = wrName
+        ? baseText.replace('professional product photograph of a 24 inch luxury faux botanical',
+            'professional product photograph of a 24 inch luxury faux botanical wreath titled "' + wrName + '",')
+        : baseText;
+      var explore = '/imagine ' + namedBase + ' --ar 4:5 --style raw --chaos 12 --s 100';
+      var exploreBlock = document.getElementById('slot-explore-'+i);
+      if (exploreBlock) exploreBlock.textContent = explore;
+
+      // Phase 3 — Production prompt (ref + seed if present)
+      var slotSeed = document.getElementById('slot-seed-'+i) ? document.getElementById('slot-seed-'+i).value.trim() : '';
+      var sharedSeed = seedVal;
+      var activeSeed = slotSeed || sharedSeed;
+      var refPart = refUrl ? refUrl + ' ' : '';
+      var seedPart = activeSeed ? ' --seed ' + activeSeed : '';
+      var prod = '/imagine ' + refPart + namedBase + ' --iw 1.5 --ar 4:5 --style raw --chaos 5 --s 50' + seedPart;
+      var prodBlock = document.getElementById('slot-prompt-'+i);
+      if (prodBlock) prodBlock.textContent = prod;
+    });
+    btn.disabled = false; icon.textContent = '✦';
+  } catch(e) {
+    statusEl.textContent = 'Something went wrong. Try again.';
+    statusEl.className = 'coll-status error';
+    btn.disabled = false; icon.textContent = '✦';
+    console.error(e);
+  }
+});
+
+
+// ── LIFESTYLE PROMPT BUILDER ──
+
+var LS_SCENES = [
+  {
+    id: 1, scene: 'Scene 01', title: 'The Front Door',
+    desc: 'Front door environment — the threshold between outside and in.',
+    sceneContext: 'An exterior front door, closed. Focus on the door material (painted wood, dark stain, aged iron hardware), the surrounding architecture (painted brick, stone surround, siding), the light falling across the threshold from the side or above. Empty wall or door panel where a wreath would hang. No objects.'
+  },
+  {
+    id: 2, scene: 'Scene 02', title: 'The Entry Hall',
+    desc: 'Interior entryway — the moment of arrival.',
+    sceneContext: 'An interior entryway looking toward or alongside a wall. Could include the edge of a console or a doorframe, but the focus is the wall surface, the quality of light coming from a doorway or window nearby, and the floor material. Empty wall above where a wreath would hang. No decor objects, no flowers.'
+  },
+  {
+    id: 3, scene: 'Scene 03', title: 'The Living Room',
+    desc: 'Living room wall or fireplace surround — warmth, texture, stillness.',
+    sceneContext: 'A living room fireplace surround or feature wall. The mantle if present, the architectural surround, the wall surface above. Light from a nearby window falling across the wall. Empty wall space above the mantle or at eye level where a wreath would hang. No objects on surfaces, no decor.'
+  },
+  {
+    id: 4, scene: 'Scene 04', title: 'The Kitchen Window',
+    desc: 'Kitchen or breakfast nook — morning light, domestic grace.',
+    sceneContext: 'A kitchen window or breakfast nook window, seen from inside. The window frame, the light quality coming through (morning, diffuse, direct), the wall or cabinet surface flanking it. Empty wall or window area where a wreath would hang above or beside the glass. No objects on counter, no decor.'
+  },
+  {
+    id: 5, scene: 'Scene 05', title: 'The Garden Gate',
+    desc: 'Exterior garden gate — outdoor light, botanical context.',
+    sceneContext: 'A garden gate or wooden fence panel, outdoor setting. The gate material (weathered wood, painted iron, cedar boards), the ground (stone path, gravel, lawn), surrounding natural light. Empty gate panel or wall space where a wreath would hang. No plants in foreground, no objects placed against the gate.'
+  },
+  {
+    id: 6, scene: 'Scene 06', title: 'The Detail',
+    desc: 'Close environmental detail — texture, light, surface.',
+    sceneContext: 'A tight editorial crop of a wall, door, or architectural surface from the collection\'s world. Could be the texture of plaster, the grain of painted wood, a threshold, a corner where two materials meet. Shallow depth of field. About the surface quality and how light falls across it. No objects, no decor — purely material and light.'
+  }
+];
+
+var _lsPrompts    = {};  // { sceneId: promptString }
+var _lsImages     = {};  // { sceneId: { src, mediaType } }
+var _lsGenerated  = false;
+
+function initLifestyle() {
+  renderLsCards();
+  updateLsStatus();
+
+  var genBtn = document.getElementById('lsGenerate');
+  if (genBtn) genBtn.addEventListener('click', generateLifestylePrompts);
+
+  // When switching to lifestyle tab, refresh status
+  document.addEventListener('click', function(e) {
+    if (e.target && e.target.dataset && e.target.dataset.page === 'lifestyle') {
+      setTimeout(updateLsStatus, 80);
+    }
+  });
+}
+
+function updateLsStatus() {
+  var dot  = document.getElementById('lsStatusDot');
+  var text = document.getElementById('lsStatusText');
+  if (!dot || !text) return;
+
+  var hasStory = (_collectionStory || '').length > 30;
+  var colName  = (document.getElementById('collectionName') || {}).value || '';
+
+  if (!hasStory) {
+    dot.className  = 'ls-status-dot';
+    text.textContent = 'Build a collection with a story first — then come back here.';
+  } else if (_lsGenerated) {
+    dot.className  = 'ls-status-dot done';
+    text.textContent = 'Scene prompts ready. Upload your Midjourney renders below each card.';
+    var tip = document.getElementById('lsTip');
+    if (tip) tip.style.display = '';
+  } else {
+    dot.className  = 'ls-status-dot ready';
+    text.textContent = 'Collection story loaded' + (colName ? ' — "' + colName + '"' : '') + '. Ready to generate scene prompts.';
+  }
+}
+
+function renderLsCards() {
+  var grid = document.getElementById('lsCardsGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  LS_SCENES.forEach(function(scene) {
+    var card = document.createElement('div');
+    card.className = 'ls-card';
+    card.id = 'ls-card-' + scene.id;
+
+    var prompt    = _lsPrompts[scene.id] || '';
+    var img       = _lsImages[scene.id];
+    var hasPrompt = prompt.length > 10;
+    var hasImg    = img && img.src;
+
+    card.innerHTML =
+      '<div class="ls-card-header">' +
+        '<div class="ls-card-scene">' + scene.scene + '</div>' +
+        '<div class="ls-card-title">' + scene.title + '</div>' +
+        '<div class="ls-card-desc">' + scene.desc + '</div>' +
+      '</div>' +
+      '<div class="ls-card-prompt-wrap">' +
+        '<div class="ls-card-prompt' + (hasPrompt ? '' : ' empty') + '" id="ls-prompt-' + scene.id + '">' +
+          (hasPrompt ? prompt : 'Generate prompts above to see your scene description here.') +
+        '</div>' +
+      '</div>' +
+      (hasPrompt ? '<div class="ls-card-actions">' +
+        '<button class="ls-card-copy" data-id="' + scene.id + '">Copy</button>' +
+        '<button class="ls-card-refine" data-id="' + scene.id + '">✦ Refine</button>' +
+      '</div>' : '') +
+      '<div class="ls-card-divider"></div>' +
+      '<div class="ls-card-upload">' +
+        '<span class="ls-upload-label">Upload your render</span>' +
+        '<div class="ls-upload-zone' + (hasImg ? ' has-image' : '') + '" id="ls-zone-' + scene.id + '">' +
+          (hasImg ? '' : '<div class="ls-upload-placeholder"><span class="ls-upload-icon">✦</span><span>Click to upload</span></div>') +
+          '<img class="ls-upload-img' + (hasImg ? ' visible' : '') + '" id="ls-img-' + scene.id + '" src="' + (hasImg ? img.src : '') + '" alt="">' +
+          '<div class="ls-upload-overlay"><span>Replace image</span></div>' +
+          '<button class="ls-upload-clear" id="ls-clear-' + scene.id + '" style="display:' + (hasImg ? 'flex' : 'none') + '">×</button>' +
+        '</div>' +
+        '<input type="file" id="ls-file-' + scene.id + '" accept="image/*" style="display:none">' +
+      '</div>';
+
+    grid.appendChild(card);
+
+    // Wire copy
+    var copyBtn = card.querySelector('.ls-card-copy');
+    if (copyBtn) copyBtn.addEventListener('click', function() {
+      var id = parseInt(copyBtn.dataset.id);
+      if (_lsPrompts[id]) {
+        navigator.clipboard.writeText(_lsPrompts[id]).then(function() {
+          copyBtn.textContent = 'Copied!';
+          copyBtn.classList.add('copied');
+          setTimeout(function() { copyBtn.textContent = 'Copy'; copyBtn.classList.remove('copied'); }, 1800);
+        });
+      }
+    });
+
+    // Wire refine
+    var refineBtn = card.querySelector('.ls-card-refine');
+    if (refineBtn) refineBtn.addEventListener('click', function() {
+      refineLsPrompt(parseInt(refineBtn.dataset.id), refineBtn);
+    });
+
+    // Wire upload zone
+    var zone   = document.getElementById('ls-zone-' + scene.id);
+    var fileIn = document.getElementById('ls-file-' + scene.id);
+    var clearB = document.getElementById('ls-clear-' + scene.id);
+
+    if (zone && fileIn) {
+      zone.addEventListener('click', function(e) {
+        if (e.target === clearB) return;
+        fileIn.click();
+      });
+      fileIn.addEventListener('change', function() {
+        var file = fileIn.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function(ev) {
+          _lsImages[scene.id] = { src: ev.target.result, mediaType: file.type };
+          // Also sync into _lifestyleImages for the lookbook
+          syncLifestyleToLookbook();
+          renderLsCards();
+        };
+        reader.readAsDataURL(file);
+        fileIn.value = '';
+      });
+    }
+    if (clearB) {
+      clearB.addEventListener('click', function(e) {
+        e.stopPropagation();
+        delete _lsImages[scene.id];
+        syncLifestyleToLookbook();
+        renderLsCards();
+      });
+    }
+  });
+}
+
+// Keep _lifestyleImages (used by lookbook) in sync with _lsImages
+function syncLifestyleToLookbook() {
+  _lifestyleImages = [];
+  LS_SCENES.forEach(function(scene) {
+    var img = _lsImages[scene.id];
+    if (img && img.src) {
+      _lifestyleImages.push({ src: img.src, caption: scene.title });
+    }
+  });
+  updateLookbookChecklist();
+}
+
+async function generateLifestylePrompts() {
+  var genBtn  = document.getElementById('lsGenerate');
+  var dot     = document.getElementById('lsStatusDot');
+  var text    = document.getElementById('lsStatusText');
+  var seed    = (document.getElementById('lsSharedSeed') || {}).value || '';
+
+  if (!_collectionStory || _collectionStory.length < 30) {
+    text.textContent = '⚠ No collection story found — generate a collection with Story Mode first.';
+    return;
+  }
+
+  genBtn.disabled = true;
+  genBtn.querySelector('#lsGenBtnText').textContent = 'Generating…';
+  dot.className  = 'ls-status-dot working';
+  text.textContent = 'Claude is reading your story and designing the scenes…';
+
+  var colName   = (document.getElementById('collectionName') || {}).value || 'this collection';
+  var slotCount = parseInt(getActive('collectionSizePills')) || 4;
+
+  // Gather wreath info for context
+  var wreathSummary = [];
+  for (var i = 1; i <= slotCount; i++) {
+    var nm = document.getElementById('slot-title-' + i);
+    var pr = document.getElementById('slot-prompt-' + i);
+    if (nm && nm.value && nm.value.trim()) {
+      wreathSummary.push(nm.value.trim());
+    }
+  }
+
+  var sceneList = LS_SCENES.map(function(s, i) {
+    return (i+1) + '. ' + s.title + ' — ' + s.sceneContext;
+  }).join('\n');
+
+  var sys = [
+    'You are Evercrafted\'s environmental photography director. Your job is to write Midjourney prompts for empty architectural and interior scenes — no people, no objects, no wreaths, no florals.',
+    '',
+    'These scenes are background environments. A wreath render will be composited in later at the design stage. Your only job is to make the scene itself beautiful, specific, and atmospherically perfect.',
+    '',
+    'Every prompt must:',
+    '— Describe the architecture, surfaces, materials, and spatial depth in precise physical terms',
+    '— Nail the light: direction (angle, side, back, diffuse), quality (raking, golden, flat, overcast, theatrical), source (window, door gap, skylight, dusk), temperature (warm amber, cool silver, neutral), and behavior (how it falls across the specific surfaces in the scene)',
+    '— Include shadow quality: hard/soft, length, direction, cast shapes on specific materials',
+    '— Specify time of day and atmospheric conditions if relevant',
+    '— Name actual surface materials: wide-plank oak floors, hand-troweled plaster, dark-stained cedar, aged brick, marble threshold, worn limestone, matte black iron hardware, linen drape',
+    '— Describe spatial depth: what is close, what recedes, what is out of focus',
+    '— Maintain complete empty space where a wreath would naturally hang — no placeholder object, just the wall/door/gate as it would look without the wreath',
+    '— End every prompt with: --ar 3:4 --v 6.1 --style raw --q 2 --s 60',
+    '',
+    'NEVER include: wreaths, flowers, botanicals, garlands, any hanging decor, people, pets, or text.',
+    'RESPOND ONLY WITH VALID JSON — an array of 6 prompt strings. No markdown, no code fences.'
+  ].join('\n');
+
+  var userMsg = [
+    'COLLECTION STORY — read this as your entire visual brief. Every sensory detail is an instruction about light, palette, surface, and atmosphere:',
+    '',
+    _collectionStory,
+    '',
+    'COLLECTION NAME: ' + colName,
+    '',
+    'From this story, extract:',
+    '— The quality and temperature of light (what time of day, what season of light, how it behaves)',
+    '— The palette of surfaces and materials (warm/cool, rough/smooth, aged/crisp)',
+    '— The emotional atmosphere (quiet, dramatic, intimate, expansive)',
+    '— The architectural character that fits this world',
+    '',
+    'Now write 6 Midjourney prompts, one for each of these empty architectural scenes:',
+    sceneList,
+    '',
+    'Each scene prompt must:',
+    '— Be purely environmental — no wreaths, no florals, no hanging objects of any kind',
+    '— Derive its light quality, palette, and material character directly from the story world above',
+    '— Be specific enough that two prompts from this set would look like they belong to the same house and the same moment in time',
+    '— Describe light behavior on the specific surfaces of that scene in physical, precise terms',
+    '— Leave clear, beautiful negative space where a wreath would naturally hang',
+    '— End with: --ar 3:4 --v 6.1 --style raw --q 2 --s 60' + (seed ? ' --seed ' + seed : ''),
+    '',
+    'Return ONLY a JSON array of 6 strings.'
+  ].join('\n');
+
+  try {
+    var resp = await fetch(CLAUDE_PROXY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 2000,
+        system: sys,
+        messages: [{ role: 'user', content: userMsg }]
+      })
+    });
+    var data   = await resp.json();
+    var rawTxt = data.content.map(function(c) { return c.text || ''; }).join('').replace(/```json|```/g,'').trim();
+    var prompts = JSON.parse(rawTxt);
+
+    if (!Array.isArray(prompts) || prompts.length < 6) throw new Error('Bad response shape');
+
+    LS_SCENES.forEach(function(scene, i) {
+      _lsPrompts[scene.id] = prompts[i] || '';
+    });
+
+    _lsGenerated = true;
+    dot.className  = 'ls-status-dot done';
+    text.textContent = '✓ Six scene prompts generated. Copy each one into Midjourney, then upload the renders below.';
+    var tip = document.getElementById('lsTip');
+    if (tip) tip.style.display = '';
+
+  } catch(e) {
+    dot.className  = 'ls-status-dot';
+    text.textContent = '⚠ Something went wrong — check your API connection and try again.';
+    console.error('Lifestyle generation error:', e);
+  }
+
+  genBtn.disabled = false;
+  genBtn.querySelector('#lsGenBtnText').textContent = '✦ Regenerate Scene Prompts';
+  renderLsCards();
+}
+
+async function refineLsPrompt(id, btn) {
+  var prompt = _lsPrompts[id];
+  if (!prompt) return;
+  var scene  = LS_SCENES.find(function(s) { return s.id === id; });
+  btn.textContent = '…';
+  btn.disabled = true;
+
+  var refineInstruction = [
+    'You are refining an empty architectural scene prompt for Midjourney. This scene is a background environment — no wreaths, no florals, no hanging objects.',
+    '',
+    'Deepen it in these specific ways:',
+    '— Make the light description more physically precise: name the exact angle, how it rakes across the specific surface, what shadow it casts and how long, whether it has warmth or coolness in that exact moment',
+    '— Add one specific material detail that increases tactile realism (the grain of the wood, the texture of the plaster, the patina of the hardware)',
+    '— If depth is underspecified, add what is sharp in the foreground and what softly recedes',
+    '— Tighten the time-of-day and atmospheric condition so it feels like a specific hour, not a generic setting',
+    '— Remove any mention of wreaths, florals, botanicals, or hanging objects if present',
+    '— Preserve all --parameters exactly as they are',
+    '',
+    'Return ONLY the improved prompt. No explanation.',
+    '',
+    'Scene: ' + scene.title,
+    'Context: ' + scene.sceneContext,
+    '',
+    'Original prompt:',
+    prompt
+  ].join('\n');
+
+  try {
+    var resp = await fetch(CLAUDE_PROXY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 600,
+        messages: [{ role: 'user', content: refineInstruction }]
+      })
+    });
+    var d = await resp.json();
+    var refined = d.content.map(function(c) { return c.text||''; }).join('').trim();
+    if (refined.length > 20) {
+      _lsPrompts[id] = refined;
+      var el = document.getElementById('ls-prompt-' + id);
+      if (el) { el.textContent = refined; el.classList.remove('empty'); }
+    }
+  } catch(e) { console.error(e); }
+
+  btn.textContent  = '✦ Refine';
+  btn.disabled = false;
+}
+
+// ── LOOKBOOK ──
+
+// Update checklist when switching to lookbook tab
+function updateLookbookChecklist() {
+  var name = document.getElementById('collectionName') ? document.getElementById('collectionName').value.trim() : '';
+  var story = _collectionStory || '';
+  var chkCol = document.getElementById('chk-collection');
+  var chkWr = document.getElementById('chk-wreaths');
+  var chkLs = document.getElementById('chk-lifestyle');
+
+  if (chkCol) {
+    var hasCol = name.length > 0 && story.length > 0;
+    chkCol.className = 'lb-check-item' + (hasCol ? ' ready' : '');
+    chkCol.querySelector('.lb-check-icon').textContent = hasCol ? '✓' : '○';
+  }
+
+  var wreathCount = 0;
+  var slotCount = parseInt(document.querySelector('.lb-section') ? (document.getElementById('collectionSizePills') ? getActive('collectionSizePills') : '4') : '4') || 4;
+  for (var i = 1; i <= 6; i++) {
+    var img = document.getElementById('slot-img-' + i);
+    if (img && img.src && img.src.length > 100) wreathCount++;
+  }
+  if (chkWr) {
+    chkWr.className = 'lb-check-item' + (wreathCount > 0 ? ' ready' : '');
+    chkWr.querySelector('.lb-check-icon').textContent = wreathCount > 0 ? '✓ ' + wreathCount : '○';
+  }
+
+  var lsCount = _lifestyleImages.length;
+  if (chkLs) {
+    chkLs.className = 'lb-check-item' + (lsCount > 0 ? ' ready' : '');
+    chkLs.querySelector('.lb-check-icon').textContent = lsCount > 0 ? '✓ ' + lsCount : '○';
+  }
+}
+
+// Lifestyle images store
+var _lifestyleImages = []; // [{base64, mediaType, caption}]
+
+function initLookbook() {
+  var addBtn = document.getElementById('lbAddLifestyle');
+  var fileInput = document.getElementById('lbLifestyleFileInput');
+  var accentPicker = document.getElementById('lbAccentPicker');
+  var accentText = document.getElementById('lbAccent');
+
+  if (accentPicker) {
+    accentPicker.addEventListener('input', function() { accentText.value = accentPicker.value; });
+    accentText.addEventListener('input', function() {
+      if (/^#[0-9a-fA-F]{6}$/.test(accentText.value)) accentPicker.value = accentText.value;
+    });
+  }
+
+  if (addBtn && fileInput) {
+    addBtn.addEventListener('click', function() {
+      if (_lifestyleImages.length >= 6) return;
+      fileInput.click();
+    });
+    fileInput.addEventListener('change', function() {
+      var file = fileInput.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function(ev) {
+        _lifestyleImages.push({ src: ev.target.result, caption: '' });
+        renderLifestyleGrid();
+        updateLookbookChecklist();
+      };
+      reader.readAsDataURL(file);
+      fileInput.value = '';
+    });
+  }
+
+  var genBtn = document.getElementById('lbGenerate');
+  var previewBtn = document.getElementById('lbPreview');
+  var downloadBtn = document.getElementById('lbDownload');
+
+  if (genBtn) genBtn.addEventListener('click', buildLookbook);
+  if (previewBtn) previewBtn.addEventListener('click', function() {
+    if (_lastLookbookHTML) {
+      var w = window.open('', '_blank');
+      w.document.write(_lastLookbookHTML);
+      w.document.close();
+    }
+  });
+  if (downloadBtn) downloadBtn.addEventListener('click', function() {
+    if (_lastLookbookHTML) {
+      var blob = new Blob([_lastLookbookHTML], { type: 'text/html' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      var colName = (document.getElementById('collectionName').value.trim() || 'lookbook').toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+      a.download = 'evercrafted-' + colName + '-lookbook.html';
+      a.click();
+    }
+  });
+}
+
+function renderLifestyleGrid() {
+  var grid = document.getElementById('lifestyleUploadGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  _lifestyleImages.forEach(function(img, idx) {
+    var item = document.createElement('div');
+    item.className = 'lifestyle-item';
+    item.innerHTML = '<img src="' + img.src + '" alt="Lifestyle">' +
+      '<div class="lifestyle-item-caption"><input type="text" placeholder="Scene caption…" value="' + (img.caption||'') + '" data-idx="' + idx + '"></div>' +
+      '<button class="lifestyle-item-remove" data-idx="' + idx + '">×</button>';
+    grid.appendChild(item);
+  });
+  grid.querySelectorAll('.lifestyle-item-remove').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      _lifestyleImages.splice(parseInt(btn.dataset.idx), 1);
+      renderLifestyleGrid();
+      updateLookbookChecklist();
+    });
+  });
+  grid.querySelectorAll('.lifestyle-item-caption input').forEach(function(inp) {
+    inp.addEventListener('input', function() {
+      _lifestyleImages[parseInt(inp.dataset.idx)].caption = inp.value;
+    });
+  });
+}
+
+var _lastLookbookHTML = '';
+
+async function buildLookbook() {
+  var status = document.getElementById('lbStatus');
+  var genBtn = document.getElementById('lbGenerate');
+  var previewBtn = document.getElementById('lbPreview');
+  var downloadBtn = document.getElementById('lbDownload');
+
+  status.className = 'lb-status-working';
+  status.textContent = 'Composing your lookbook…';
+  genBtn.disabled = true;
+
+  // Gather data
+  var brand = document.getElementById('lbBrand').value.trim() || 'Evercrafted';
+  var ctaText = document.getElementById('lbCta').value.trim() || 'Shop This Wreath';
+  var ctaLink = document.getElementById('lbCtaLink').value.trim() || '#';
+  var accent = document.getElementById('lbAccent').value.trim() || '#4A6741';
+  var colName = document.getElementById('collectionName').value.trim() || 'A Collection';
+  var story = _collectionStory || '';
+  var slotCount = parseInt(getActive('collectionSizePills')) || 4;
+
+  // Gather wreaths
+  var wreaths = [];
+  for (var i = 1; i <= slotCount; i++) {
+    var nameEl = document.getElementById('slot-title-' + i);
+    var imgEl = document.getElementById('slot-img-' + i);
+    var exploreEl = document.getElementById('slot-explore-' + i);
+    wreaths.push({
+      num: i,
+      name: nameEl ? (nameEl.value.trim() || 'Wreath ' + i) : 'Wreath ' + i,
+      img: imgEl ? imgEl.src : '',
+      florals: (function(el) {
+        if (!el) return '';
+        var t = el.textContent || '';
+        var m = t.match(/focal.*?:|florals.*?:/i);
+        return m ? t.substring(t.indexOf(m[0])+m[0].length, t.indexOf(m[0])+m[0].length+80).replace(/--.*$/,'').trim() : '';
+      })(document.getElementById('slot-prompt-' + i))
+    });
+  }
+
+  // Generate lyrical caption for each wreath using Claude
+  var lyricalCaptions = [];
+  if (story) {
+    try {
+      var capPrompt = 'You are writing copy for a luxury faux botanical wreath lookbook. The collection story is:\n\n' + story.substring(0,600) + '\n\nWrite a single lyrical one-sentence caption (12-20 words) for each of ' + wreaths.length + ' wreaths. These are poetic — atmospheric, sensory, evocative. No product language, no tech specs. Return ONLY a JSON array of strings, e.g. ["caption 1","caption 2"]. No markdown.';
+      var resp = await fetch(CLAUDE_PROXY_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 400, messages: [{ role: 'user', content: capPrompt }] })
+      });
+      var d = await resp.json();
+      var txt = d.content.map(function(c) { return c.text||''; }).join('').replace(/```json|```/g,'').trim();
+      lyricalCaptions = JSON.parse(txt);
+    } catch(e) { lyricalCaptions = []; }
+  }
+
+  status.textContent = 'Weaving the story…';
+  await new Promise(function(r) { setTimeout(r, 400); });
+
+  // Build the lookbook HTML
+  _lastLookbookHTML = generateLookbookHTML({
+    brand, ctaText, ctaLink, accent, colName, story,
+    wreaths, lyricalCaptions, lifestyle: _lifestyleImages
+  });
+
+  status.className = 'lb-status-done';
+  status.textContent = '✓ Lookbook ready — preview it or download the HTML file.';
+  genBtn.disabled = false;
+  previewBtn.style.display = '';
+  downloadBtn.style.display = '';
+}
+
+function generateLookbookHTML(opts) {
+  var { brand, ctaText, ctaLink, accent, colName, story, wreaths, lyricalCaptions, lifestyle } = opts;
+
+  // Split story into paragraphs for cinematic beats
+  var paras = (story || '').split('\n').filter(function(p) { return p.trim().length > 30; });
+  var beatPara1 = paras[0] || '';
+  var beatPara2 = paras[1] || paras[0] || '';
+  var beatPara3 = paras[Math.floor(paras.length/2)] || paras[0] || '';
+
+  // Build wreath cards
+  var wreathCards = wreaths.map(function(w, i) {
+    var caption = lyricalCaptions[i] || '';
+    var hasImg = w.img && w.img.length > 100;
+    var displayName = w.name && w.name.length > 1 ? w.name : ('No. 0' + (i+1));
+    return '<article class="piece" style="animation-delay:' + (i*0.12) + 's">' +
+      '<div class="photo">' +
+        (hasImg ? '<img src="' + w.img + '" alt="' + displayName + '" loading="lazy">' : '<div class="photo-placeholder"><span>✦</span></div>') +
+        '<div class="piece-num">No. 0' + (i+1) + '</div>' +
+      '</div>' +
+      '<div class="meta">' +
+        '<h3>' + displayName + '</h3>' +
+        (caption ? '<p class="story">' + caption + '</p>' : '') +
+        '<a href="' + ctaLink + '" class="cta">' + ctaText + '</a>' +
+      '</div>' +
+    '</article>';
+  }).join('');
+
+  // Build lifestyle section
+  var lifestyleSection = '';
+  if (lifestyle && lifestyle.length > 0) {
+    var lsItems = lifestyle.map(function(ls, i) {
+      return '<div class="ls-item" style="animation-delay:' + (i*0.1) + 's">' +
+        '<div class="ls-photo"><img src="' + ls.src + '" alt="' + (ls.caption||'Lifestyle') + '" loading="lazy"></div>' +
+        (ls.caption ? '<div class="ls-caption">' + ls.caption + '</div>' : '') +
+      '</div>';
+    }).join('');
+    lifestyleSection = '<section id="lifestyle"><div class="lifestyle-head"><div class="overline">The World It Lives In</div><h2>' + colName.split(' ').slice(0,4).join(' ') + '</h2></div><div class="ls-grid">' + lsItems + '</div></section>';
+  }
+
+  // Noise SVG texture
+  var noiseSvg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E";
+
+  return '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width,initial-scale=1">\n<title>' + colName + ' — ' + brand + '</title>\n<link rel="preconnect" href="https://fonts.googleapis.com">\n<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=EB+Garamond:ital,wght@0,400;1,400&family=DM+Mono&display=swap" rel="stylesheet">\n<style>\n' +
+  ':root{--accent:' + accent + ';--accent-light:' + accent + 'aa;--accent-pale:' + accent + '18;--off-white:#F9F7F4;--paper:#F2EFE9;--black:#1A1A1A;--ink:#4A4A4A;--mid:#787878;--border:#E0DDD8;--serif:"Cormorant Garamond",Georgia,serif;--mono:"DM Mono",monospace;}' +
+  '*{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}' +
+  'body{font-family:var(--serif);background:var(--off-white);color:var(--ink);-webkit-font-smoothing:antialiased;}' +
+  'body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:60;opacity:.04;mix-blend-mode:multiply;background-image:url("' + noiseSvg + '");}' +
+  '.masthead{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:20px 36px;transition:background .5s,box-shadow .5s;}' +
+  '.masthead.scrolled{background:rgba(249,247,244,.94);backdrop-filter:blur(12px);box-shadow:0 1px 0 var(--border);}' +
+  '.wordmark{font-family:var(--serif);font-size:22px;font-weight:400;font-style:italic;color:rgba(249,247,244,.9);text-decoration:none;transition:color .5s;letter-spacing:.04em;}' +
+  '.masthead.scrolled .wordmark{color:var(--accent);}' +
+  '.crumb{font-family:var(--mono);font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:rgba(249,247,244,.7);transition:color .5s;}' +
+  '.masthead.scrolled .crumb{color:var(--mid);}' +
+
+  /* BEATS */
+  '.beat{position:relative;min-height:100vh;display:grid;place-items:center;overflow:hidden;}' +
+  '.beat .bg{position:absolute;inset:0;background-size:cover;background-position:center;}' +
+  '.beat .scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,14,12,.38) 0%,rgba(10,14,12,.08) 42%,rgba(10,14,12,.52) 100%);}' +
+  '.beat .copy{position:relative;z-index:2;max-width:760px;padding:0 32px;text-align:center;}' +
+  '.beat .line{font-family:var(--serif);font-weight:300;font-size:clamp(26px,4vw,52px);line-height:1.3;color:#f5f2ec;opacity:0;transform:translateY(28px);transition:opacity 1s ease,transform 1s ease;text-wrap:balance;}' +
+  '.beat .dek{font-family:var(--serif);font-weight:300;font-size:clamp(15px,1.6vw,19px);line-height:1.8;color:rgba(245,242,236,.82);max-width:580px;margin:20px auto 0;opacity:0;transform:translateY(28px);transition:opacity 1s ease .3s,transform 1s ease .3s;}' +
+  '.beat.lit .line,.beat.lit .dek{opacity:1;transform:none;}' +
+  '.beat .line em{font-style:italic;}' +
+  '.beat-tag{position:absolute;bottom:28px;left:0;right:0;z-index:2;text-align:center;font-family:var(--mono);font-size:9.5px;letter-spacing:2.8px;text-transform:uppercase;color:rgba(245,242,236,.5);}' +
+  '#hero .line{font-size:clamp(34px,5.5vw,68px);}' +
+  '#hero .script-sub{display:block;font-style:italic;font-size:clamp(18px,2.4vw,28px);color:rgba(220,230,218,.85);margin-top:16px;}' +
+  '.scroll-cue{position:absolute;bottom:36px;left:50%;transform:translateX(-50%);z-index:3;width:1px;height:54px;background:linear-gradient(180deg,rgba(245,242,236,0),rgba(245,242,236,.75));animation:cue 2.4s ease-in-out infinite;}' +
+  '@keyframes cue{0%,100%{transform:translateX(-50%) scaleY(.3);transform-origin:top;}50%{transform:translateX(-50%) scaleY(1);}}' +
+
+  /* HERO BG — gradient forest */
+  '#hero{background:linear-gradient(160deg,#0e1710 0%,#1c2e18 35%,#253825 65%,#1a2614 100%);}' +
+  '#hero .bg-orb{position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;}' +
+  '#hero .orb1{width:600px;height:600px;background:radial-gradient(circle,rgba(74,103,65,.3) 0%,transparent 70%);top:-100px;right:-100px;}' +
+  '#hero .orb2{width:400px;height:400px;background:radial-gradient(circle,rgba(107,143,103,.18) 0%,transparent 70%);bottom:50px;left:50px;}' +
+
+  /* STORY BEAT BACKGROUNDS */
+  '.beat-story-1{background:linear-gradient(160deg,#171410 0%,#2a2118 50%,#1e1a14 100%);}' +
+  '.beat-story-2{background:linear-gradient(200deg,#101518 0%,#1a2820 50%,#141e16 100%);}' +
+
+  /* ASSEMBLY */
+  '#assembly{position:relative;height:320vh;background:var(--paper);}' +
+  '.assembly-stage{position:sticky;top:0;height:100vh;display:grid;place-items:center;overflow:hidden;}' +
+  '.assembly-bg{position:absolute;inset:0;background:radial-gradient(110% 80% at 50% 10%,#F7F4ED 0%,#EDE9DF 65%,#E4DFD0 100%);}' +
+  '.assembly-wrap{position:relative;width:min(80vmin,640px);}' +
+  '.assembly-wrap svg{width:100%;height:auto;display:block;}' +
+  '.assembly-caption{position:absolute;top:max(60px,7vh);left:0;right:0;text-align:center;font-family:var(--mono);font-size:10.5px;letter-spacing:2.6px;text-transform:uppercase;color:var(--accent);}' +
+  '.assembly-line{position:absolute;bottom:max(40px,5.5vh);left:0;right:0;text-align:center;font-family:var(--serif);font-style:italic;font-weight:300;font-size:clamp(17px,2.2vw,25px);color:var(--ink);padding:0 28px;transition:opacity .5s;}' +
+  '.assembly-render{position:absolute;inset:-8%;display:grid;place-items:center;opacity:0;transition:opacity .6s ease;}' +
+  '.assembly-render img{width:100%;height:auto;border-radius:16px;box-shadow:0 28px 70px rgba(0,0,0,.18);}' +
+  '.stem{opacity:0;}.stem.placed{opacity:1;transition:opacity .4s ease;}' +
+  '.stem .pulse{transform-origin:center;animation:settle .45s ease both;}' +
+  '@keyframes settle{0%{transform:scale(.2);}70%{transform:scale(1.14);}100%{transform:scale(1);}}' +
+
+  /* REVEAL / GALLERY */
+  '#reveal{background:var(--off-white);padding:110px 28px 100px;}' +
+  '.reveal-head{max-width:680px;margin:0 auto 24px;text-align:center;}' +
+  '.overline{font-family:var(--mono);font-size:10px;letter-spacing:2.8px;text-transform:uppercase;color:var(--accent);margin-bottom:14px;}' +
+  '.reveal-head h2{font-family:var(--serif);font-weight:300;font-size:clamp(30px,4vw,50px);letter-spacing:-.02em;line-height:1.18;color:var(--black);}' +
+  '.reveal-head .lede{font-size:clamp(15px,1.6vw,18px);line-height:1.8;color:var(--ink);max-width:540px;margin:16px auto 0;}' +
+  '.gallery{max-width:1200px;margin:56px auto 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:22px;}' +
+  '.piece{background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden;opacity:0;transform:translateY(22px);transition:opacity .6s ease,transform .6s ease,box-shadow .25s ease;}' +
+  '.piece.lit{opacity:1;transform:none;}.piece:hover{transform:translateY(-4px);box-shadow:0 22px 52px rgba(0,0,0,.1);}' +
+  '.photo{aspect-ratio:1/1;overflow:hidden;position:relative;background:var(--paper);}' +
+  '.photo img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .6s ease;}' +
+  '.piece:hover .photo img{transform:scale(1.04);}' +
+  '.photo-placeholder{width:100%;height:100%;display:grid;place-items:center;color:var(--border);font-size:2rem;}' +
+  '.piece-num{position:absolute;top:12px;right:12px;font-family:var(--mono);font-size:9.5px;letter-spacing:1.6px;text-transform:uppercase;background:rgba(249,247,244,.88);border:1px solid var(--border);border-radius:9999px;padding:4px 12px;color:var(--ink);}' +
+  '.meta{padding:20px 22px 24px;}' +
+  '.meta h3{font-family:var(--serif);font-weight:400;font-size:22px;color:var(--black);letter-spacing:.01em;}' +
+  '.story{font-style:italic;font-size:15px;color:var(--ink);margin:8px 0 16px;line-height:1.7;min-height:40px;}' +
+  '.cta{display:inline-block;font-family:var(--mono);font-size:10.5px;font-weight:400;letter-spacing:2px;text-transform:uppercase;color:#f5f2ec;background:var(--accent);text-decoration:none;border-radius:9999px;padding:11px 24px;transition:transform .2s,opacity .2s;}' +
+  '.cta:hover{opacity:.88;transform:scale(1.02);}' +
+
+  /* LIFESTYLE */
+  '#lifestyle{background:var(--paper);padding:100px 28px;}' +
+  '.lifestyle-head{max-width:680px;margin:0 auto 52px;text-align:center;}' +
+  '.lifestyle-head h2{font-family:var(--serif);font-weight:300;font-size:clamp(28px,3.8vw,46px);letter-spacing:-.02em;color:var(--black);}' +
+  '.ls-grid{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;}' +
+  '.ls-item{border-radius:12px;overflow:hidden;opacity:0;transform:translateY(20px);transition:opacity .6s ease,transform .6s ease;}' +
+  '.ls-item.lit{opacity:1;transform:none;}' +
+  '.ls-photo{aspect-ratio:4/3;overflow:hidden;}' +
+  '.ls-photo img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .6s ease;}' +
+  '.ls-item:hover .ls-photo img{transform:scale(1.04);}' +
+  '.ls-caption{font-family:var(--mono);font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--mid);padding:10px 2px 0;text-align:center;}' +
+
+  /* FOOTER */
+  'footer{background:var(--black);color:rgba(245,242,236,.55);text-align:center;padding:72px 28px;}' +
+  '.footer-wordmark{font-family:var(--serif);font-style:italic;font-size:28px;color:rgba(107,143,103,.85);display:block;margin-bottom:12px;}' +
+  '.footer-rule{font-family:var(--mono);font-size:9.5px;letter-spacing:2.2px;text-transform:uppercase;}' +
+
+  '@media(max-width:640px){#reveal{padding:70px 20px 70px;}.gallery{grid-template-columns:1fr;}.masthead{padding:16px 20px;}}' +
+  '\n</style>\n</head>\n<body>\n' +
+
+  '<nav class="masthead" id="masthead"><a class="wordmark" href="#">' + brand + '</a><span class="crumb">' + colName + '</span></nav>\n' +
+
+  /* HERO */
+  '<section class="beat" id="hero">' +
+    '<div class="bg-orb orb1"></div><div class="bg-orb orb2"></div>' +
+    '<div class="scrim"></div>' +
+    '<div class="copy">' +
+      '<h1 class="line">' + colName + '<em class="script-sub">' + (brand) + '</em></h1>' +
+      (beatPara1 ? '<p class="dek">' + beatPara1.substring(0,180) + '…</p>' : '') +
+    '</div>' +
+    '<div class="beat-tag">' + (wreaths.length) + ' pieces · faux botanical · handcrafted</div>' +
+    '<div class="scroll-cue"></div>' +
+  '</section>\n' +
+
+  /* STORY BEAT 1 */
+  (beatPara2 ? '<section class="beat beat-story-1"><div class="scrim"></div><div class="copy"><p class="line"><em>' + beatPara2.substring(0,160) + '</em></p></div></section>\n' : '') +
+
+  /* ASSEMBLY */
+  '<section id="assembly">' +
+    '<div class="assembly-stage">' +
+      '<div class="assembly-bg"></div>' +
+      '<div class="assembly-caption">' + colName + ' · every stem has a place</div>' +
+      '<div class="assembly-wrap">' +
+        '<svg id="bp" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg"></svg>' +
+        '<div class="assembly-render" id="finalRender">' +
+          (wreaths[0] && wreaths[0].img && wreaths[0].img.length > 100 ? '<img src="' + wreaths[0].img + '" alt="' + wreaths[0].name + '">' : '') +
+        '</div>' +
+      '</div>' +
+      '<div class="assembly-line" id="assemblyLine">The ring comes first.</div>' +
+    '</div>' +
+  '</section>\n' +
+
+  /* STORY BEAT 2 */
+  (beatPara3 && beatPara3 !== beatPara2 ? '<section class="beat beat-story-2"><div class="scrim"></div><div class="copy"><p class="line"><em>' + beatPara3.substring(0,150) + '</em></p></div></section>\n' : '') +
+
+  /* GALLERY */
+  '<section id="reveal">' +
+    '<div class="reveal-head">' +
+      '<div class="overline">The Collection</div>' +
+      '<h2>' + colName + '</h2>' +
+      (story ? '<p class="lede">' + (story.split('\n').filter(function(p){return p.trim().length>20;})[0]||'').substring(0,200) + '</p>' : '') +
+    '</div>' +
+    '<div class="gallery" id="gallery">' + wreathCards + '</div>' +
+  '</section>\n' +
+
+  /* LIFESTYLE */
+  lifestyleSection + '\n' +
+
+  '<footer><span class="footer-wordmark">' + brand + '</span><span class="footer-rule">' + colName + ' · Luxury Faux Botanical · Handcrafted</span></footer>\n' +
+
+  '<script>\n(function(){\n' +
+  /* Masthead scroll */
+  'var mast=document.getElementById("masthead");' +
+  'window.addEventListener("scroll",function(){mast.classList.toggle("scrolled",window.scrollY>60);},{passive:true});' +
+
+  /* Intersection observer for beats */
+  'var bio=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting)e.target.classList.add("lit");});},{threshold:0.25});' +
+  'document.querySelectorAll(".beat").forEach(function(b){bio.observe(b);});' +
+
+  /* Gallery cards */
+  'var gio=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){var pieces=[].slice.call(document.querySelectorAll(".piece"));pieces.forEach(function(p,i){setTimeout(function(){p.classList.add("lit");},i*100);});gio.disconnect();}});},{threshold:0.1});' +
+  'var gal=document.getElementById("gallery");if(gal)gio.observe(gal);' +
+
+  /* Lifestyle cards */
+  'var lio=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){[].slice.call(document.querySelectorAll(".ls-item")).forEach(function(l,i){setTimeout(function(){l.classList.add("lit");},i*90);});lio.disconnect();}});},{threshold:0.1});' +
+  'var lsg=document.querySelector(".ls-grid");if(lsg)lio.observe(lsg);' +
+
+  /* Assembly SVG animation */
+  'var SVG_NS="http://www.w3.org/2000/svg";' +
+  'var C=300,R=210,CIRC=2*Math.PI*R;' +
+  'var bp=document.getElementById("bp");' +
+  'if(bp){' +
+    // Outer ring
+    'var ring=document.createElementNS(SVG_NS,"circle");' +
+    'ring.setAttribute("cx",C);ring.setAttribute("cy",C);ring.setAttribute("r",R);' +
+    'ring.setAttribute("fill","none");ring.setAttribute("stroke","' + accent + '");ring.setAttribute("stroke-width","22");' +
+    'ring.setAttribute("stroke-dasharray",CIRC);ring.setAttribute("stroke-dashoffset",CIRC);' +
+    'ring.setAttribute("stroke-linecap","round");ring.style.transition="stroke-dashoffset 1.4s cubic-bezier(.4,0,.2,1)";' +
+    'bp.appendChild(ring);' +
+    // Inner ring
+    'var ring2=document.createElementNS(SVG_NS,"circle");' +
+    'ring2.setAttribute("cx",C);ring2.setAttribute("cy",C);ring2.setAttribute("r",R-14);' +
+    'ring2.setAttribute("fill","none");ring2.setAttribute("stroke","' + accent + '");ring2.setAttribute("stroke-width","4");ring2.setAttribute("opacity","0");' +
+    'ring2.style.transition="opacity .5s ease";' +
+    'bp.appendChild(ring2);' +
+    // Generate organic stem positions
+    'var STEMS=[];' +
+    'var angles=[15,42,68,95,118,148,172,198,222,248,272,298,322,348];' +
+    'var radii=[0.82,1.0,0.75,0.95,1.0,0.88,0.72,1.0,0.9,0.78,1.0,0.85,0.92,0.7];' +
+    'var sizes=[18,28,22,16,30,20,14,26,18,22,30,16,24,20];' +
+    'var colors=["' + accent + '","' + accent + 'cc","' + accent + '88"];' +
+    'angles.forEach(function(ang,i){STEMS.push([ang,radii[i],sizes[i],colors[i%3]]);});' +
+    'function polar(cx,cy,r,deg){var rad=(deg-90)*Math.PI/180;return{x:cx+r*Math.cos(rad),y:cy+r*Math.sin(rad)};}' +
+    'var nodes=STEMS.map(function(s){' +
+      'var pos=polar(C,C,R*s[1],s[0]);' +
+      'var g=document.createElementNS(SVG_NS,"g");' +
+      'g.setAttribute("class","stem");' +
+      'g.setAttribute("transform","translate("+pos.x.toFixed(1)+" "+pos.y.toFixed(1)+") rotate("+s[0]+")");' +
+      // Petal group
+      'var inner=document.createElementNS(SVG_NS,"g");inner.setAttribute("class","pulse");' +
+      'var petals=[1,.65,.42];' +
+      'petals.forEach(function(f,j){' +
+        'var c=document.createElementNS(SVG_NS,"circle");' +
+        'c.setAttribute("r",s[2]*f);' +
+        'c.setAttribute("fill",j===0?s[3]:(j===1?"rgba(255,255,255,.38)":"rgba(80,60,40,.18)"));' +
+        'if(j>0){c.setAttribute("cx",(s[2]*0.4*(j===1?1:-1)).toFixed(1));c.setAttribute("cy",(-s[2]*0.3).toFixed(1));}' +
+        'inner.appendChild(c);' +
+      '});' +
+      'g.appendChild(inner);' +
+      'bp.appendChild(g);' +
+      'return g;' +
+    '});' +
+    // Line labels
+    'var LINES=[' +
+      '[0.0,"The ring comes first."],' +
+      '[0.15,"Greenery sets the direction."],' +
+      '[0.38,"Filler softens the structure."],' +
+      '[0.6,"Each focal bloom has an address."],' +
+      '[0.82,"Movement. Not symmetry."],' +
+      '[0.96,"' + (colName.split(' ').slice(0,3).join(' ')) + '."]];\n' +
+    'var assembly=document.getElementById("assembly");' +
+    'var finalRender=document.getElementById("finalRender");' +
+    'var lineEl=document.getElementById("assemblyLine");' +
+    'var lastLine=-1;' +
+    'function assemblyProgress(){var r=assembly.getBoundingClientRect();var total=r.height-innerHeight;return Math.min(1,Math.max(0,-r.top/total));}' +
+    'function renderAssembly(){' +
+      'var p=assemblyProgress();' +
+      'var ringP=Math.min(1,p/0.14);' +
+      'ring.setAttribute("stroke-dashoffset",CIRC*(1-ringP));' +
+      'ring2.setAttribute("opacity",ringP>=1?"0.3":"0");' +
+      'var stemP=Math.min(1,Math.max(0,(p-0.14)/0.68));' +
+      'var placed=Math.floor(stemP*STEMS.length);' +
+      'nodes.forEach(function(n,i){n.classList.toggle("placed",i<placed);});' +
+      'var fade=Math.min(1,Math.max(0,(p-0.82)/0.14));' +
+      'finalRender.style.opacity=fade;' +
+      'bp.style.opacity=1-fade;' +
+      'for(var i=LINES.length-1;i>=0;i--){if(p>=LINES[i][0]){if(lastLine!==i){lastLine=i;lineEl.textContent=LINES[i][1];}break;}}' +
+    '}' +
+    'window.addEventListener("scroll",function(){requestAnimationFrame(renderAssembly);},{passive:true});' +
+    'renderAssembly();' +
+  '}' +
+  '})();\n<\/script>\n</body>\n</html>';
+}
+
+// ══════════════════════════════════════════════
+// ── SESSION SAVE / RESTORE ──
+// ══════════════════════════════════════════════
+
+var SESSION_KEY      = 'evercrafted_autosave';
+var SESSION_VERSION  = 1;
+var _autosaveTimer   = null;
+var _sessionDirty    = false;
+
+function collectSession() {
+  var session = {
+    version:  SESSION_VERSION,
+    savedAt:  new Date().toISOString(),
+    label:    '',
+    studio: {
+      aiBrief:       val('aiBriefInput'),
+      diameter:      val('diameter'),
+      baseType:      val('baseType'),
+      customPalette: val('customPalette'),
+      foliage:       val('foliage'),
+      florals:       val('florals'),
+      accents:       val('accents'),
+      blueprintUrl:  val('blueprintUrl'),
+      seed:          val('seed'),
+      ar:            val('ar'),
+      discordMode:   chk('discordMode'),
+      srefUrl:       val('srefUrl'),
+      chaos:         val('chaos'),
+      stylize:       val('stylize'),
+      iw:            val('iw'),
+      sw:            val('sw'),
+      swDiscord:     val('swDiscord'),
+      pills: {
+        seasonPills:   getActive('seasonPills'),
+        formPills:     getActive('formPills'),
+        coveragePills: getActive('coveragePills'),
+        palettePills:  getActive('palettePills'),
+        bgPills:       getActive('bgPills'),
+        anglePills:    getActive('anglePills')
+      }
+    },
+    collection: {
+      name:      val('collectionName'),
+      refUrl:    val('collectionRefUrl'),
+      seed:      val('collectionSeed'),
+      storyMode: chk('storyModeToggle'),
+      storySeed: val('storySeed'),
+      story:     _collectionStory,
+      season:    getActive('collectionSeasonPills'),
+      size:      getActive('collectionSizePills'),
+      slots:     collectSlots()
+    },
+    lifestyle: {
+      sharedSeed: val('lsSharedSeed'),
+      prompts:    JSON.parse(JSON.stringify(_lsPrompts)),
+      images:     collectLsImages()
+    },
+    lookbook: {
+      brand:   val('lbBrand'),
+      cta:     val('lbCta'),
+      ctaLink: val('lbCtaLink'),
+      accent:  val('lbAccent')
+    }
+  };
+  session.label = session.collection.name ||
+    (session.collection.story ? session.collection.story.substring(0,40) + '…' : 'Untitled Session');
+  return session;
+}
+
+function val(id) { var e=document.getElementById(id); return e?e.value:''; }
+function chk(id) { var e=document.getElementById(id); return e?e.checked:false; }
+
+function collectSlots() {
+  var slots = [];
+  for (var i=1;i<=6;i++) {
+    var ne=document.getElementById('slot-title-'+i);
+    var se=document.getElementById('slot-seed-'+i);
+    var ee=document.getElementById('slot-explore-'+i);
+    var pe=document.getElementById('slot-prompt-'+i);
+    var ie=document.getElementById('slot-img-'+i);
+    slots.push({
+      name:     ne ? ne.value.trim() : '',
+      seed:     se ? se.value.trim() : '',
+      explore:  ee ? ee.textContent.trim() : '',
+      prompt:   pe ? pe.textContent.trim() : '',
+      imgSrc:   ie ? (ie.src && ie.src.startsWith('data:') ? ie.src : '') : '',
+      baseText: _slotData[i] ? (_slotData[i].baseText||'') : ''
+    });
+  }
+  return slots;
+}
+
+function collectLsImages() {
+  var out={};
+  for(var i=1;i<=6;i++){
+    if(_lsImages[i]&&_lsImages[i].src) out[i]={src:_lsImages[i].src,mediaType:_lsImages[i].mediaType||'image/jpeg'};
+  }
+  return out;
+}
+
+function restoreSession(session) {
+  if(!session||session.version!==SESSION_VERSION) return false;
+  var s=session.studio||{};
+  setVal('aiBriefInput',s.aiBrief); setVal('diameter',s.diameter); setVal('baseType',s.baseType);
+  setVal('customPalette',s.customPalette); setVal('foliage',s.foliage); setVal('florals',s.florals);
+  setVal('accents',s.accents); setVal('blueprintUrl',s.blueprintUrl); setVal('seed',s.seed);
+  setVal('ar',s.ar); setChk('discordMode',s.discordMode); setVal('srefUrl',s.srefUrl);
+  if(s.chaos!=null)    setSlider('chaos',   'chaosVal',   s.chaos,   false);
+  if(s.stylize!=null)  setSlider('stylize', 'stylizeVal', s.stylize, false);
+  if(s.iw!=null)       setSlider('iw',      'iwVal',      s.iw,      true);
+  if(s.sw!=null)       setSlider('sw',      'swVal',      s.sw,      false);
+  if(s.swDiscord!=null)setSlider('swDiscord','swDiscordVal',s.swDiscord,false);
+  if(s.pills) Object.keys(s.pills).forEach(function(g){if(s.pills[g])setActivePill(g,s.pills[g]);});
+  var dm=document.getElementById('discordMode');
+  if(dm) dm.dispatchEvent(new Event('change'));
+
+  var c=session.collection||{};
+  setVal('collectionName',c.name); setVal('collectionRefUrl',c.refUrl); setVal('collectionSeed',c.seed);
+  setVal('storySeed',c.storySeed); setChk('storyModeToggle',c.storyMode);
+  var st=document.getElementById('storyModeToggle');
+  if(st) st.dispatchEvent(new Event('change'));
+  if(c.story){ _collectionStory=c.story; var se=document.getElementById('storyText'); if(se) se.textContent=c.story; }
+  if(c.season) setActivePill('collectionSeasonPills',c.season);
+  if(c.size)   setActivePill('collectionSizePills',c.size);
+
+  // Re-init slots to correct count then restore
+  _slotData={};
+  initCollectionSlots();
+
+  if(c.slots&&c.slots.length){
+    c.slots.forEach(function(slot,i){
+      var idx=i+1;
+      var ne=document.getElementById('slot-title-'+idx);
+      var se2=document.getElementById('slot-seed-'+idx);
+      var ee=document.getElementById('slot-explore-'+idx);
+      var pe=document.getElementById('slot-prompt-'+idx);
+      var ie=document.getElementById('slot-img-'+idx);
+      if(ne&&slot.name)    ne.value=slot.name;
+      if(se2&&slot.seed)   se2.value=slot.seed;
+      if(ee&&slot.explore&&slot.explore!=='Generate collection to see prompt') ee.textContent=slot.explore;
+      if(pe&&slot.prompt &&slot.prompt !=='Paste seed above then regenerate')  pe.textContent=slot.prompt;
+      if(ie&&slot.imgSrc){ ie.src=slot.imgSrc; ie.classList.add('visible'); }
+      if(slot.baseText) _slotData[idx]={baseText:slot.baseText};
+    });
+  }
+
+  var ls=session.lifestyle||{};
+  setVal('lsSharedSeed',ls.sharedSeed);
+  if(ls.prompts){ Object.keys(ls.prompts).forEach(function(k){ _lsPrompts[parseInt(k)]=ls.prompts[k]; }); _lsGenerated=Object.keys(_lsPrompts).length>0; }
+  if(ls.images){ Object.keys(ls.images).forEach(function(k){ _lsImages[parseInt(k)]=ls.images[k]; }); syncLifestyleToLookbook(); }
+  renderLsCards(); updateLsStatus();
+
+  var lb=session.lookbook||{};
+  setVal('lbBrand',lb.brand); setVal('lbCta',lb.cta); setVal('lbCtaLink',lb.ctaLink);
+  if(lb.accent){ setVal('lbAccent',lb.accent); var pk=document.getElementById('lbAccentPicker'); if(pk) pk.value=lb.accent; }
+
+  updateLookbookChecklist();
+  markClean();
+  return true;
+}
+
+function setVal(id,v){ if(v==null)return; var e=document.getElementById(id); if(e) e.value=v; }
+function setChk(id,v){ if(v==null)return; var e=document.getElementById(id); if(e) e.checked=!!v; }
+function setSlider(id,valId,raw,isFloat){
+  var e=document.getElementById(id), d=document.getElementById(valId);
+  if(!e)return; e.value=raw; if(d) d.textContent=isFloat?parseFloat(raw).toFixed(1):raw;
+}
+
+function scheduleAutosave(){
+  _sessionDirty=true; markDirty();
+  clearTimeout(_autosaveTimer);
+  _autosaveTimer=setTimeout(doAutosave,3000);
+}
+function doAutosave(){
+  try{ localStorage.setItem(SESSION_KEY,JSON.stringify(collectSession())); markClean(); }
+  catch(e){ console.warn('Autosave failed:',e); }
+}
+function markDirty(){
+  var e=document.getElementById('saveStatus');
+  if(e){e.textContent='● unsaved changes';e.className='save-status dirty';}
+}
+function markClean(){
+  _sessionDirty=false;
+  var e=document.getElementById('saveStatus');
+  if(e){e.textContent='✓ saved';e.className='save-status saved';}
+  setTimeout(function(){ var e2=document.getElementById('saveStatus'); if(e2&&e2.className==='save-status saved'){e2.textContent='';e2.className='save-status';} },2500);
+}
+
+function wireAutosave(){
+  document.addEventListener('input',   scheduleAutosave,{passive:true});
+  document.addEventListener('change',  scheduleAutosave,{passive:true});
+  document.addEventListener('click', function(e){
+    if(e.target&&e.target.classList&&e.target.classList.contains('pill')) scheduleAutosave();
+  },{passive:true});
+}
+
+function saveSessionToFile(){
+  try{
+    var session=collectSession();
+    var json=JSON.stringify(session,null,2);
+    var blob=new Blob([json],{type:'application/json'});
+    var a=document.createElement('a');
+    var name=(session.collection.name||'session').toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'').substring(0,40)||'evercrafted-session';
+    var d=new Date().toISOString().slice(0,10);
+    a.href=URL.createObjectURL(blob);
+    a.download='evercrafted-'+name+'-'+d+'.json';
+    a.click();
+    localStorage.setItem(SESSION_KEY,json);
+    markClean();
+  }catch(e){ alert('Save failed: '+e.message); }
+}
+
+function loadSessionFromFile(file){
+  var reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      var session=JSON.parse(ev.target.result);
+      var ok=restoreSession(session);
+      if(ok){ var e=document.getElementById('saveStatus'); if(e){e.textContent='✓ session loaded';e.className='save-status saved';} setTimeout(markClean,2000); }
+      else alert("This file doesn\'t look like an Evercrafted session.");
+    }catch(e){ alert('Could not read file: '+e.message); }
+  };
+  reader.readAsText(file);
+}
+
+function formatTimeAgo(date){
+  var diff=Math.floor((Date.now()-date.getTime())/1000);
+  if(diff<60)   return 'just now';
+  if(diff<3600) return Math.floor(diff/60)+' min ago';
+  if(diff<86400)return Math.floor(diff/3600)+' hr ago';
+  return Math.floor(diff/86400)+'d ago';
+}
+
+function checkForAutosave(){
+  try{
+    var raw=localStorage.getItem(SESSION_KEY);
+    if(!raw) return;
+    var session=JSON.parse(raw);
+    if(!session||session.version!==SESSION_VERSION) return;
+    var savedAt=session.savedAt?new Date(session.savedAt):null;
+    var label=session.label||'Untitled';
+    var banner=document.getElementById('restoreBanner');
+    var btext=document.getElementById('restoreBannerText');
+    if(!banner) return;
+    var t=savedAt?' — last saved '+formatTimeAgo(savedAt):'';
+    btext.textContent='"'+label+'"'+t+'. Restore where you left off?';
+    banner.style.display='flex';
+  }catch(e){}
+}
+
+function clearCollectionState(){
+  setVal('collectionName',''); setVal('collectionRefUrl',''); setVal('collectionSeed','');
+  setVal('storySeed',''); setChk('storyModeToggle',false);
+  var st=document.getElementById('storyModeToggle'); if(st) st.dispatchEvent(new Event('change'));
+  _collectionStory=''; _lastStorySeed='';
+  var se=document.getElementById('storyText'); if(se) se.textContent='';
+  setActivePill('collectionSeasonPills','autumn');
+  setActivePill('collectionSizePills','4');
+  _slotData={}; initCollectionSlots();
+  _lsPrompts={}; _lsImages={}; _lsGenerated=false; _lifestyleImages=[];
+  renderLsCards(); updateLsStatus(); updateLookbookChecklist();
+  scheduleAutosave();
+}
+
+function initSaveRestore(){
+  var btnSave=document.getElementById('btnSave');
+  if(btnSave) btnSave.addEventListener('click',saveSessionToFile);
+
+  var btnLoad=document.getElementById('btnLoad');
+  var fi=document.getElementById('sessionFileInput');
+  if(btnLoad&&fi){
+    btnLoad.addEventListener('click',function(){ fi.click(); });
+    fi.addEventListener('change',function(){ if(fi.files[0]) loadSessionFromFile(fi.files[0]); fi.value=''; });
+  }
+
+  var btnNew=document.getElementById('btnNew');
+  var modal=document.getElementById('newCollectionModal');
+  var conf=document.getElementById('newColConfirm');
+  var canc=document.getElementById('newColCancel');
+  if(btnNew&&modal) btnNew.addEventListener('click',function(){ modal.classList.add('open'); });
+  if(canc&&modal)   canc.addEventListener('click',function(){ modal.classList.remove('open'); });
+  if(conf&&modal)   conf.addEventListener('click',function(){ modal.classList.remove('open'); clearCollectionState(); });
+  if(modal) modal.addEventListener('click',function(e){ if(e.target===modal) modal.classList.remove('open'); });
+
+  var ry=document.getElementById('restoreYes');
+  var rn=document.getElementById('restoreNo');
+  var rb=document.getElementById('restoreBanner');
+  if(ry) ry.addEventListener('click',function(){
+    try{ var s=JSON.parse(localStorage.getItem(SESSION_KEY)); restoreSession(s); }catch(e){}
+    if(rb) rb.style.display='none';
+  });
+  if(rn) rn.addEventListener('click',function(){ if(rb) rb.style.display='none'; });
+
+  wireAutosave();
+  checkForAutosave();
+}
+
+
+// ── INIT ──
+initCollectionSlots();
+initLifestyle();
+initLookbook();
+initSaveRestore();
+initElevenLabs();
+
+// Update checklist when switching to lookbook tab
+document.addEventListener('click', function(e) {
+  if (e.target && e.target.dataset && e.target.dataset.page === 'lookbook') {
+    setTimeout(updateLookbookChecklist, 100);
+  }
+});
+
+// ── ELEVENLABS VOICE ──
+var _elAudio = null;
+var _elObjectUrl = null;
+var _elVoices = [];
+var _elIsGenerating = false;
+var EL_KEY_STORAGE = 'evercrafted_el_key';
+
+// Curated editorial voices — these are real ElevenLabs voice IDs for natural-sounding voices
+var EL_CURATED_VOICES = [
+  { id: 'EXAVITQu4vr4xnSDxMaL', name: 'Sarah — warm, editorial' },
+  { id: 'onwK4e9ZLuTAKqWW03F9', name: 'Daniel — deep, measured' },
+  { id: 'XB0fDUnXU5powFXDhCwa', name: 'Charlotte — clear, composed' },
+  { id: 'pFZP5JQG7iQjIQuC4Bku', name: 'Lily — gentle, expressive' },
+  { id: 'cjVigY5qzO86Huf0OWal', name: 'Eric — grounded, calm' },
+  { id: 'nPczCjzI2devNBz1zQrb', name: 'Brian — authoritative, warm' }
+];
+
+function elGetKey() {
+  return localStorage.getItem(EL_KEY_STORAGE) || '';
+}
+
+function elSaveKeyLocal(key) {
+  if (key) localStorage.setItem(EL_KEY_STORAGE, key);
+  else localStorage.removeItem(EL_KEY_STORAGE);
+}
+
+function elFormatTime(sec) {
+  if (!isFinite(sec) || sec < 0) return '0:00';
+  var m = Math.floor(sec / 60);
+  var s = Math.floor(sec % 60);
+  return m + ':' + (s < 10 ? '0' : '') + s;
+}
+
+function elUpdatePlayerUI() {
+  var audio = _elAudio;
+  var playBtn = document.getElementById('apPlay');
+  var seekEl  = document.getElementById('apSeek');
+  var timeEl  = document.getElementById('apTime');
+  if (!audio || !playBtn) return;
+  playBtn.textContent = audio.paused ? '▶' : '❚❚';
+  if (seekEl && audio.duration) {
+    seekEl.value = (audio.currentTime / audio.duration) * 100;
+  }
+  if (timeEl) {
+    timeEl.textContent = elFormatTime(audio.currentTime) + ' / ' + elFormatTime(audio.duration);
+  }
+}
+
+function elPopulateVoices() {
+  var sel = document.getElementById('apVoice');
+  if (!sel) return;
+  sel.innerHTML = '';
+  EL_CURATED_VOICES.forEach(function(v) {
+    var opt = document.createElement('option');
+    opt.value = v.id;
+    opt.textContent = v.name;
+    sel.appendChild(opt);
+  });
+}
+
+async function elGenerateAndPlay() {
+  if (_elIsGenerating) return;
+  var story = (_collectionStory || '').trim();
+  if (!story) { alert('No story to read — generate a collection story in Story Mode first.'); return; }
+
+  var key = elGetKey();
+  if (!key) {
+    // Show key modal
+    var m = document.getElementById('elModal');
+    var ki = document.getElementById('elKeyInput');
+    var clr = document.getElementById('elClearKey');
+    if (m) m.classList.add('open');
+    if (ki) ki.value = '';
+    if (clr) clr.style.display = 'none';
+    return;
+  }
+
+  _elIsGenerating = true;
+  var listenBtn = document.getElementById('btnListenStory');
+  var genMsg    = document.getElementById('apGenerating');
+  var playerBar = document.getElementById('audioPlayerBar');
+  if (listenBtn) { listenBtn.disabled = true; listenBtn.innerHTML = '<span class="listen-icon">♪</span> Generating…'; }
+  if (genMsg)    genMsg.style.display = '';
+  if (playerBar) playerBar.classList.remove('active');
+
+  // Stop any existing audio
+  if (_elAudio) { _elAudio.pause(); _elAudio = null; }
+  if (_elObjectUrl) { URL.revokeObjectURL(_elObjectUrl); _elObjectUrl = null; }
+
+  var voiceSel = document.getElementById('apVoice');
+  var voiceId  = voiceSel ? voiceSel.value : EL_CURATED_VOICES[0].id;
+
+  try {
+    var resp = await fetch('https://api.elevenlabs.io/v1/text-to-speech/' + voiceId, {
+      method: 'POST',
+      headers: {
+        'xi-api-key': key,
+        'Content-Type': 'application/json',
+        'Accept': 'audio/mpeg'
+      },
+      body: JSON.stringify({
+        text: story,
+        model_id: 'eleven_turbo_v2_5',
+        voice_settings: { stability: 0.52, similarity_boost: 0.78, style: 0.22, use_speaker_boost: true }
+      })
+    });
+
+    if (!resp.ok) {
+      var errData = await resp.json().catch(function(){ return {}; });
+      if (resp.status === 401) {
+        // Bad key — clear it and re-prompt
+        elSaveKeyLocal('');
+        var m = document.getElementById('elModal');
+        var ki = document.getElementById('elKeyInput');
+        if (ki) ki.value = '';
+        if (m) m.classList.add('open');
+        throw new Error('Invalid API key');
+      }
+      throw new Error(errData.detail && errData.detail.message ? errData.detail.message : 'ElevenLabs error ' + resp.status);
+    }
+
+    var blob = await resp.blob();
+    _elObjectUrl = URL.createObjectURL(blob);
+    _elAudio = new Audio(_elObjectUrl);
+
+    _elAudio.addEventListener('timeupdate', elUpdatePlayerUI);
+    _elAudio.addEventListener('ended', function() {
+      var playBtn = document.getElementById('apPlay');
+      if (playBtn) playBtn.textContent = '▶';
+      var seekEl = document.getElementById('apSeek');
+      if (seekEl) seekEl.value = 0;
+    });
+    _elAudio.addEventListener('loadedmetadata', elUpdatePlayerUI);
+
+    // Wire seek slider
+    var seekEl = document.getElementById('apSeek');
+    if (seekEl) {
+      seekEl.oninput = function() {
+        if (_elAudio && _elAudio.duration) {
+          _elAudio.currentTime = (_elAudio.duration * parseFloat(seekEl.value)) / 100;
+        }
+      };
+    }
+
+    if (playerBar) playerBar.classList.add('active');
+    await _elAudio.play();
+    elUpdatePlayerUI();
+
+  } catch(e) {
+    console.error('ElevenLabs error:', e);
+    if (!e.message.includes('Invalid API key')) {
+      alert('Audio generation failed: ' + e.message + '\n\nCheck your ElevenLabs key and try again.');
+    }
+  } finally {
+    _elIsGenerating = false;
+    if (listenBtn) { listenBtn.disabled = false; listenBtn.innerHTML = '<span class="listen-icon">♪</span> Listen'; }
+    if (genMsg) genMsg.style.display = 'none';
+  }
+}
+
+function initElevenLabs() {
+  // Populate voice dropdown
+  elPopulateVoices();
+
+  // Listen button
+  var listenBtn = document.getElementById('btnListenStory');
+  if (listenBtn) listenBtn.addEventListener('click', elGenerateAndPlay);
+
+  // Play / pause
+  var playBtn = document.getElementById('apPlay');
+  if (playBtn) playBtn.addEventListener('click', function() {
+    if (!_elAudio) return;
+    if (_elAudio.paused) { _elAudio.play(); }
+    else { _elAudio.pause(); }
+    setTimeout(elUpdatePlayerUI, 50);
+  });
+
+  // Stop
+  var stopBtn = document.getElementById('apStop');
+  if (stopBtn) stopBtn.addEventListener('click', function() {
+    if (!_elAudio) return;
+    _elAudio.pause();
+    _elAudio.currentTime = 0;
+    var seekEl = document.getElementById('apSeek');
+    if (seekEl) seekEl.value = 0;
+    elUpdatePlayerUI();
+  });
+
+  // Voice change → re-generate if audio exists
+  var voiceSel = document.getElementById('apVoice');
+  if (voiceSel) voiceSel.addEventListener('change', function() {
+    if (_elAudio && !_elAudio.paused) {
+      _elAudio.pause(); _elAudio = null;
+      if (_elObjectUrl) { URL.revokeObjectURL(_elObjectUrl); _elObjectUrl = null; }
+      var playerBar = document.getElementById('audioPlayerBar');
+      if (playerBar) playerBar.classList.remove('active');
+    }
+  });
+
+  // API key modal — Save
+  var elModal  = document.getElementById('elModal');
+  var elSaveBtn = document.getElementById('elSaveKey');
+  var elCancelBtn = document.getElementById('elCancelKey');
+  var elClearBtn = document.getElementById('elClearKey');
+  var elKeyInput = document.getElementById('elKeyInput');
+
+  if (elSaveBtn) elSaveBtn.addEventListener('click', async function() {
+    var key = elKeyInput ? elKeyInput.value.trim() : '';
+    if (!key) { elKeyInput.focus(); return; }
+    elSaveKeyLocal(key);
+    if (elModal) elModal.classList.remove('open');
+    // Trigger generation now that key is saved
+    await elGenerateAndPlay();
+    // Show clear button next time
+    if (elClearBtn) elClearBtn.style.display = '';
+  });
+
+  if (elCancelBtn) elCancelBtn.addEventListener('click', function() {
+    if (elModal) elModal.classList.remove('open');
+  });
+
+  if (elClearBtn) {
+    // Show clear button if key already saved
+    if (elGetKey()) elClearBtn.style.display = '';
+    elClearBtn.addEventListener('click', function() {
+      if (confirm('Remove your saved ElevenLabs API key?')) {
+        elSaveKeyLocal('');
+        elClearBtn.style.display = 'none';
+        if (elKeyInput) elKeyInput.value = '';
+      }
+    });
+  }
+
+  if (elModal) elModal.addEventListener('click', function(e) {
+    if (e.target === elModal) elModal.classList.remove('open');
+  });
+
+  // Show clear button if key already exists
+  if (elGetKey() && elClearBtn) elClearBtn.style.display = '';
+
+  // Stop audio when leaving collection page
+  document.querySelectorAll('[data-page]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      if (btn.dataset.page !== 'collection') {
+        if (_elAudio && !_elAudio.paused) { _elAudio.pause(); }
+      }
+    });
+  });
+}
+
+})();
+</script>
+</body>
+</html>

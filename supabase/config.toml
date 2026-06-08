@@ -1,0 +1,7 @@
+project_id = "qybnmlqesnbmgxayhllf"
+
+# The claude proxy is called directly from the static page (no Supabase auth
+# token), so JWT verification must be off. Auth to Anthropic is handled inside
+# the function via the ANTHROPIC_API_KEY secret.
+[functions.claude]
+verify_jwt = false
