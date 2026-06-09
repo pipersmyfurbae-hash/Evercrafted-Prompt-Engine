@@ -427,7 +427,7 @@ footer { text-align: center; padding: 18px; font-size: 0.72rem; color: #bbb; let
         </div>
         <label>Form / Structure</label>
         <div class="pill-group" id="formPills">
-          <div class="pill" data-val="full 360 degree ring">Full 360°</div><div class="pill active" data-val="incomplete circular form with intentional asymmetry">Incomplete Circle</div><div class="pill" data-val="full and lush, layered depth">Full &amp; Lush</div><div class="pill" data-val="low profile and flat">Low Profile</div><div class="pill" data-val="open airy form, minimal material, maximized negative space">Open &amp; Airy</div>
+          <div class="pill" data-val="full 360 degree ring">Full 360°</div><div class="pill active" data-val="complete continuous circular grapevine ring, fully intact and unbroken all the way around, with intentionally asymmetric floral placement">Asymmetric Ring</div><div class="pill" data-val="full and lush, layered depth">Full &amp; Lush</div><div class="pill" data-val="low profile and flat">Low Profile</div><div class="pill" data-val="open airy form, minimal material, maximized negative space">Open &amp; Airy</div>
         </div>
         <label>Composition / Coverage</label>
         <div class="pill-group" id="coveragePills">
@@ -489,7 +489,7 @@ footer { text-align: center; padding: 18px; font-size: 0.72rem; color: #bbb; let
         </div>
         <div class="row" style="margin-top:13px">
           <div><label>Seed</label><input type="number" id="seed" placeholder="Paste after first run"></div>
-          <div><label>Aspect Ratio</label><select id="ar"><option value="4:5" selected>4:5 — Etsy/Amazon</option><option value="1:1">1:1 — Square</option><option value="3:4">3:4</option><option value="3:2">3:2 — Detail</option><option value="16:9">16:9 — Banner</option></select></div>
+          <div><label>Aspect Ratio</label><select id="ar"><option value="4:5">4:5 — Etsy/Amazon</option><option value="1:1" selected>1:1 — Square</option><option value="3:4">3:4</option><option value="3:2">3:2 — Detail</option><option value="16:9">16:9 — Banner</option></select></div>
         </div>
       </div>
       <div class="card">
@@ -1030,7 +1030,7 @@ var CLAUDE_PROXY_URL = 'https://qybnmlqesnbmgxayhllf.supabase.co/functions/v1/cl
 // Appended to EVERY Midjourney prompt. Midjourney respects --no far more
 // reliably than inline "NO fresh" wording. Edit this list to add/remove banned
 // looks; it is the hard block that keeps renders to high-end faux florals.
-var NEG_FRESH = ' --no fresh flowers, real flowers, live flowers, living plants, fresh botanicals, wilting petals, dewy moisture, water droplets, dew, condensation, potted plant, garden bed, cut stems, flowers in water, vase';
+var NEG_FRESH = ' --no fresh flowers, real flowers, live flowers, living plants, fresh botanicals, wilting petals, dewy moisture, water droplets, dew, condensation, potted plant, garden bed, cut stems, flowers in water, vase, text, words, letters, typography, watermark, signature, caption, label';
 
 // ── PAGE NAV ──
 function showPage(name) {
@@ -1213,7 +1213,7 @@ function generateCatalogSet() {
   var p = getParams();
   var text = buildBaseText();
   var shots = [
-    { key: 'c1', color: '#a5d6a7', title: 'SHOT 1 — Hero Front View', bg: 'neutral plaster background', angle: 'flat-lay straight-on product view, entire wreath fully visible', ar: '4:5' },
+    { key: 'c1', color: '#a5d6a7', title: 'SHOT 1 — Hero Front View', bg: 'neutral plaster background', angle: 'flat-lay straight-on product view, entire wreath fully visible', ar: '1:1' },
     { key: 'c2', color: '#80cbc4', title: 'SHOT 2 — Lifestyle (Front Door)', bg: 'hanging on a dark stained wooden front door with black hardware, natural outdoor daylight', angle: 'straight-on at eye level', ar: '4:5' },
     { key: 'c3', color: '#c8a96e', title: 'SHOT 3 — Close-Up Detail', bg: 'neutral plaster background', angle: 'macro close-up detail of the lower floral cluster, shallow depth of field, creamy bokeh background', ar: '3:2' },
     { key: 'c4', color: '#b0a8e0', title: 'SHOT 4 — Angled Editorial', bg: 'luxury interior setting with soft ambient light', angle: 'slight 18 degree angle to show depth and dimension, full wreath visible', ar: '4:5' }
@@ -1261,7 +1261,7 @@ document.getElementById('aiBriefBtn').addEventListener('click', async function()
   document.getElementById('briefBtnIcon').innerHTML = '<span style="display:inline-block;width:12px;height:12px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 0.6s linear infinite"></span>';
   document.getElementById('briefBtnText').textContent = 'Reading…';
   setAIStatus('Interpreting brief…','');
-  var sys = 'You are Evercrafted\'s emotional design engine. Translate a brief into wreath parameters. RESPOND ONLY WITH VALID JSON, no markdown. Schema: {"season":"summer|spring|autumn|holiday|boho|farmhouse|modern minimal|winter","diameter":"12|14|16|18|20|24|26|28|30","baseType":"grapevine|foam ring|thin gold metal hoop|thin black metal hoop|wire frame|cedar or pine base","form":"full 360 degree ring|incomplete circular form with intentional asymmetry|full and lush, layered depth|low profile and flat|open airy form, minimal material, maximized negative space","composition":"dominant botanical mass from 2 to 7 o\'clock, open and bare from 8 to 1 o\'clock, 15-22% natural base visible, controlled negative space|evenly distributed florals around the full ring, balanced 360 degree coverage|crescent composition, dense florals wrapping lower right to upper right, bare vine on left side|large floral cluster at the bottom center, light airy greenery around the rest of the ring|side swag composition, heavy florals sweeping from upper left to lower left, open on right|half moon composition, dense botanicals along the lower half, bare and open on the upper half|corner-weighted top-right cluster with diagonal movement toward lower-left, significant open base","customPalette":"string","foliage":"string","florals":"string","accents":"string","background":"neutral plaster background|clean white studio background|luxury interior setting with soft ambient light|hanging on a dark stained wooden front door with black hardware, natural outdoor daylight|rustic weathered garden gate, natural light|pale sage linen wall, warm morning light, editorial lifestyle setting","angle":"flat-lay straight-on product view, entire wreath fully visible, minimal distortion|slight 15 degree angle to show depth and dimension|macro close-up detail of lower cluster, shallow depth of field, creamy bokeh background|three-quarter angle showing both depth and full form","designRationale":"string","bow":"string — include ONLY if a ribbon bow genuinely suits this brief and season; describe its placement, a color complementing the palette, and material (satin, velvet, silk, or linen ribbon). Empty string for no bow."} RULES: Never cherry blossom/pussy willow/twig blossoms. Faux only. Let emotion guide every parameter.';
+  var sys = 'You are Evercrafted\'s emotional design engine. Translate a brief into wreath parameters. RESPOND ONLY WITH VALID JSON, no markdown. Schema: {"season":"summer|spring|autumn|holiday|boho|farmhouse|modern minimal|winter","diameter":"12|14|16|18|20|24|26|28|30","baseType":"grapevine|foam ring|thin gold metal hoop|thin black metal hoop|wire frame|cedar or pine base","form":"full 360 degree ring|complete continuous circular grapevine ring, fully intact and unbroken all the way around, with intentionally asymmetric floral placement|full and lush, layered depth|low profile and flat|open airy form, minimal material, maximized negative space","composition":"dominant botanical mass from 2 to 7 o\'clock, open and bare from 8 to 1 o\'clock, 15-22% natural base visible, controlled negative space|evenly distributed florals around the full ring, balanced 360 degree coverage|crescent composition, dense florals wrapping lower right to upper right, bare vine on left side|large floral cluster at the bottom center, light airy greenery around the rest of the ring|side swag composition, heavy florals sweeping from upper left to lower left, open on right|half moon composition, dense botanicals along the lower half, bare and open on the upper half|corner-weighted top-right cluster with diagonal movement toward lower-left, significant open base","customPalette":"string","foliage":"string","florals":"string","accents":"string","background":"neutral plaster background|clean white studio background|luxury interior setting with soft ambient light|hanging on a dark stained wooden front door with black hardware, natural outdoor daylight|rustic weathered garden gate, natural light|pale sage linen wall, warm morning light, editorial lifestyle setting","angle":"flat-lay straight-on product view, entire wreath fully visible, minimal distortion|slight 15 degree angle to show depth and dimension|macro close-up detail of lower cluster, shallow depth of field, creamy bokeh background|three-quarter angle showing both depth and full form","designRationale":"string","bow":"string — include ONLY if a ribbon bow genuinely suits this brief and season; describe its placement, a color complementing the palette, and material (satin, velvet, silk, or linen ribbon). Empty string for no bow."} RULES: Never cherry blossom/pussy willow/twig blossoms. Faux only. Let emotion guide every parameter.';
   try {
     var res = await fetch(CLAUDE_PROXY_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:1000, system:sys, messages:[{role:'user',content:'Brief: "'+brief+'"'}] }) });
     var data = await res.json();
@@ -1477,11 +1477,11 @@ function injectNameIntoPrompts(idx) {
   var name   = nameEl ? nameEl.value.trim() : '';
   var namedBase = name
     ? d.baseText.replace('professional product photograph of a 24 inch luxury faux botanical',
-        'professional product photograph of a 24 inch luxury faux botanical wreath titled "' + name + '",')
+        'professional product photograph of a 24 inch luxury faux botanical')
     : d.baseText;
   var exploreEl = document.getElementById('slot-explore-' + idx);
   if (exploreEl && exploreEl.textContent && exploreEl.textContent !== 'Generate collection to see prompt') {
-    exploreEl.textContent = '/imagine ' + namedBase + ' --ar 4:5 --style raw --chaos 12 --s 100' + NEG_FRESH;
+    exploreEl.textContent = '/imagine ' + namedBase + ' --ar 1:1 --style raw --chaos 12 --s 100' + NEG_FRESH;
   }
   rebuildProductionPrompt(idx, namedBase);
 }
@@ -1493,13 +1493,13 @@ function rebuildProductionPrompt(idx, overrideBase) {
   var name   = nameEl ? nameEl.value.trim() : '';
   var base   = overrideBase || (name
     ? d.baseText.replace('professional product photograph of a 24 inch luxury faux botanical',
-        'professional product photograph of a 24 inch luxury faux botanical wreath titled "' + name + '",')
+        'professional product photograph of a 24 inch luxury faux botanical')
     : d.baseText);
   var seed     = document.getElementById('slot-seed-'+idx).value.trim();
   var refUrl   = document.getElementById('collectionRefUrl').value.trim();
   var refPart  = refUrl ? refUrl + ' ' : '';
   var seedPart = seed ? ' --seed ' + seed : '';
-  var prod = '/imagine ' + refPart + base + ' --iw 1.5 --ar 4:5 --style raw --chaos 5 --s 50' + seedPart + NEG_FRESH;
+  var prod = '/imagine ' + refPart + base + ' --iw 1.5 --ar 1:1 --style raw --chaos 5 --s 50' + seedPart + NEG_FRESH;
   var block = document.getElementById('slot-prompt-'+idx);
   if (block) block.textContent = prod;
 }
@@ -1605,7 +1605,7 @@ document.getElementById('btnCollectionGenerate').addEventListener('click', async
       if (floralsEl) floralsEl.value = w.focalFlowers;
       if (accentEl) accentEl.value = w.accentColor;
 
-      var baseText = 'professional product photograph of a 24 inch luxury faux botanical '+season+' wreath on natural grapevine base, incomplete circular form with intentional asymmetry, '+w.composition+', palette of '+w.palette+', botanicals: luxury faux '+w.foliage+'; luxury faux '+w.focalFlowers+'; accents: '+w.accents+', matte silk petals with firm edges and visible textile microfibers, semi-gloss foliage (silk not plastic), NO plastic shine, NO artificial glow, museum-quality luxury faux florals, macro botanical realism, neutral plaster background, flat-lay straight-on product view, entire wreath fully visible, side-lit natural daylight (12-2pm), 85mm f/3.5 lens, crisp focus';
+      var baseText = 'professional product photograph of a 24 inch luxury faux botanical '+season+' wreath on natural grapevine base, complete continuous circular grapevine ring, fully intact and unbroken all the way around, with intentionally asymmetric floral placement, '+w.composition+', palette of '+w.palette+', botanicals: luxury faux '+w.foliage+'; luxury faux '+w.focalFlowers+'; accents: '+w.accents+', matte silk petals with firm edges and visible textile microfibers, semi-gloss foliage (silk not plastic), NO plastic shine, NO artificial glow, museum-quality luxury faux florals, macro botanical realism, neutral plaster background, flat-lay straight-on product view, entire wreath fully visible, side-lit natural daylight (12-2pm), 85mm f/3.5 lens, crisp focus';
 
       // Store for seed-triggered rebuild
       _slotData[i] = { baseText: baseText };
@@ -1614,9 +1614,9 @@ document.getElementById('btnCollectionGenerate').addEventListener('click', async
       var wrName = w.name || '';
       var namedBase = wrName
         ? baseText.replace('professional product photograph of a 24 inch luxury faux botanical',
-            'professional product photograph of a 24 inch luxury faux botanical wreath titled "' + wrName + '",')
+            'professional product photograph of a 24 inch luxury faux botanical')
         : baseText;
-      var explore = '/imagine ' + namedBase + ' --ar 4:5 --style raw --chaos 12 --s 100' + NEG_FRESH;
+      var explore = '/imagine ' + namedBase + ' --ar 1:1 --style raw --chaos 12 --s 100' + NEG_FRESH;
       var exploreBlock = document.getElementById('slot-explore-'+i);
       if (exploreBlock) exploreBlock.textContent = explore;
 
@@ -1626,7 +1626,7 @@ document.getElementById('btnCollectionGenerate').addEventListener('click', async
       var activeSeed = slotSeed || sharedSeed;
       var refPart = refUrl ? refUrl + ' ' : '';
       var seedPart = activeSeed ? ' --seed ' + activeSeed : '';
-      var prod = '/imagine ' + refPart + namedBase + ' --iw 1.5 --ar 4:5 --style raw --chaos 5 --s 50' + seedPart + NEG_FRESH;
+      var prod = '/imagine ' + refPart + namedBase + ' --iw 1.5 --ar 1:1 --style raw --chaos 5 --s 50' + seedPart + NEG_FRESH;
       var prodBlock = document.getElementById('slot-prompt-'+i);
       if (prodBlock) prodBlock.textContent = prod;
     });
