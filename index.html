@@ -448,6 +448,15 @@ footer { text-align: center; padding: 18px; font-size: 0.72rem; color: #bbb; let
         <input type="text" id="florals" value="ivory hydrangea clusters (primary mass), white garden roses (focal pops), buttercream ranunculus (warmth)">
         <label>Accents &amp; Fillers</label>
         <input type="text" id="accents" value="ivory berry clusters (punctuation only), fine twig tips (minimal reach)">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:0.82rem;color:var(--mid);margin-top:15px">
+          <input type="checkbox" id="bowEnabled" style="width:auto;accent-color:var(--green-dark)"> Add a bow
+        </label>
+        <div id="bowFields" style="display:none">
+          <label>Bow Details <span style="text-transform:none;letter-spacing:0;font-size:0.68rem;color:var(--faint)">(placement, color, material — or let AI choose)</span></label>
+          <input type="text" id="bowDetails" placeholder="e.g. oversized satin bow at lower right, sage green, trailing tails">
+          <button class="btn btn-ai" id="bowAiBtn" style="margin-top:8px">✦ Let AI choose the bow</button>
+          <div class="ai-status" id="bowStatus" style="margin-top:6px;min-height:16px"></div>
+        </div>
       </div>
     </div>
     <div>
@@ -1127,7 +1136,10 @@ function buildBaseText() {
   var accents = document.getElementById('accents').value.trim();
   var bg = getActive('bgPills');
   var angle = getActive('anglePills');
-  return 'professional product photograph of a ' + diameter + ' inch luxury faux botanical ' + season + ' wreath on natural ' + base + ' base, ' + form + ', ' + composition + ', palette of ' + palette + ', botanicals: luxury faux ' + foliage + '; luxury faux ' + florals + '; accents: ' + accents + ', matte silk petals with firm edges and visible textile microfibers, semi-gloss foliage (silk not plastic), structured botanical stems, NO plastic shine, NO dewy or moist cues, NO artificial glow, museum-quality luxury faux florals, macro botanical realism, ' + bg + ', ' + angle + ', side-lit natural daylight (12-2pm), soft diffused shadows, 85mm f/3.5 lens, crisp focus, entire wreath fully visible, minimal distortion';
+  var bowOn = document.getElementById('bowEnabled') && document.getElementById('bowEnabled').checked;
+  var bowDetails = document.getElementById('bowDetails') ? document.getElementById('bowDetails').value.trim() : '';
+  var bowText = bowOn ? ', finished with a luxury faux ribbon bow — ' + (bowDetails || 'an elegant satin bow, placement and color chosen to complement the palette') : '';
+  return 'professional product photograph of a ' + diameter + ' inch luxury faux botanical ' + season + ' wreath on natural ' + base + ' base, ' + form + ', ' + composition + ', palette of ' + palette + ', botanicals: luxury faux ' + foliage + '; luxury faux ' + florals + '; accents: ' + accents + bowText + ', matte silk petals with firm edges and visible textile microfibers, semi-gloss foliage (silk not plastic), structured botanical stems, NO plastic shine, NO dewy or moist cues, NO artificial glow, museum-quality luxury faux florals, macro botanical realism, ' + bg + ', ' + angle + ', side-lit natural daylight (12-2pm), soft diffused shadows, 85mm f/3.5 lens, crisp focus, entire wreath fully visible, minimal distortion';
 }
 
 function getParams() {
@@ -1249,7 +1261,7 @@ document.getElementById('aiBriefBtn').addEventListener('click', async function()
   document.getElementById('briefBtnIcon').innerHTML = '<span style="display:inline-block;width:12px;height:12px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 0.6s linear infinite"></span>';
   document.getElementById('briefBtnText').textContent = 'Reading…';
   setAIStatus('Interpreting brief…','');
-  var sys = 'You are Evercrafted\'s emotional design engine. Translate a brief into wreath parameters. RESPOND ONLY WITH VALID JSON, no markdown. Schema: {"season":"summer|spring|autumn|holiday|boho|farmhouse|modern minimal|winter","diameter":"12|14|16|18|20|24|26|28|30","baseType":"grapevine|foam ring|thin gold metal hoop|thin black metal hoop|wire frame|cedar or pine base","form":"full 360 degree ring|incomplete circular form with intentional asymmetry|full and lush, layered depth|low profile and flat|open airy form, minimal material, maximized negative space","composition":"dominant botanical mass from 2 to 7 o\'clock, open and bare from 8 to 1 o\'clock, 15-22% natural base visible, controlled negative space|evenly distributed florals around the full ring, balanced 360 degree coverage|crescent composition, dense florals wrapping lower right to upper right, bare vine on left side|large floral cluster at the bottom center, light airy greenery around the rest of the ring|side swag composition, heavy florals sweeping from upper left to lower left, open on right|half moon composition, dense botanicals along the lower half, bare and open on the upper half|corner-weighted top-right cluster with diagonal movement toward lower-left, significant open base","customPalette":"string","foliage":"string","florals":"string","accents":"string","background":"neutral plaster background|clean white studio background|luxury interior setting with soft ambient light|hanging on a dark stained wooden front door with black hardware, natural outdoor daylight|rustic weathered garden gate, natural light|pale sage linen wall, warm morning light, editorial lifestyle setting","angle":"flat-lay straight-on product view, entire wreath fully visible, minimal distortion|slight 15 degree angle to show depth and dimension|macro close-up detail of lower cluster, shallow depth of field, creamy bokeh background|three-quarter angle showing both depth and full form","designRationale":"string"} RULES: Never cherry blossom/pussy willow/twig blossoms. Faux only. Let emotion guide every parameter.';
+  var sys = 'You are Evercrafted\'s emotional design engine. Translate a brief into wreath parameters. RESPOND ONLY WITH VALID JSON, no markdown. Schema: {"season":"summer|spring|autumn|holiday|boho|farmhouse|modern minimal|winter","diameter":"12|14|16|18|20|24|26|28|30","baseType":"grapevine|foam ring|thin gold metal hoop|thin black metal hoop|wire frame|cedar or pine base","form":"full 360 degree ring|incomplete circular form with intentional asymmetry|full and lush, layered depth|low profile and flat|open airy form, minimal material, maximized negative space","composition":"dominant botanical mass from 2 to 7 o\'clock, open and bare from 8 to 1 o\'clock, 15-22% natural base visible, controlled negative space|evenly distributed florals around the full ring, balanced 360 degree coverage|crescent composition, dense florals wrapping lower right to upper right, bare vine on left side|large floral cluster at the bottom center, light airy greenery around the rest of the ring|side swag composition, heavy florals sweeping from upper left to lower left, open on right|half moon composition, dense botanicals along the lower half, bare and open on the upper half|corner-weighted top-right cluster with diagonal movement toward lower-left, significant open base","customPalette":"string","foliage":"string","florals":"string","accents":"string","background":"neutral plaster background|clean white studio background|luxury interior setting with soft ambient light|hanging on a dark stained wooden front door with black hardware, natural outdoor daylight|rustic weathered garden gate, natural light|pale sage linen wall, warm morning light, editorial lifestyle setting","angle":"flat-lay straight-on product view, entire wreath fully visible, minimal distortion|slight 15 degree angle to show depth and dimension|macro close-up detail of lower cluster, shallow depth of field, creamy bokeh background|three-quarter angle showing both depth and full form","designRationale":"string","bow":"string — include ONLY if a ribbon bow genuinely suits this brief and season; describe its placement, a color complementing the palette, and material (satin, velvet, silk, or linen ribbon). Empty string for no bow."} RULES: Never cherry blossom/pussy willow/twig blossoms. Faux only. Let emotion guide every parameter.';
   try {
     var res = await fetch(CLAUDE_PROXY_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:1000, system:sys, messages:[{role:'user',content:'Brief: "'+brief+'"'}] }) });
     var data = await res.json();
@@ -1274,6 +1286,11 @@ function applyAIConfig(config) {
   if (config.diameter) { var s = document.getElementById('diameter'); Array.from(s.options).forEach(function(o) { if (o.value===String(config.diameter)||o.textContent.trim()===String(config.diameter)) { o.selected=true; s.classList.add('ai-filled'); } }); }
   if (config.baseType) { var s2 = document.getElementById('baseType'); Array.from(s2.options).forEach(function(o) { if (o.value===config.baseType) { o.selected=true; s2.classList.add('ai-filled'); } }); }
   setField('customPalette',config.customPalette); setField('foliage',config.foliage); setField('florals',config.florals); setField('accents',config.accents);
+  if (config.bow && String(config.bow).trim()) {
+    var _be=document.getElementById('bowEnabled'), _bf=document.getElementById('bowFields'), _bd=document.getElementById('bowDetails');
+    if(_be) _be.checked=true; if(_bf) _bf.style.display='block';
+    if(_bd){ _bd.value=String(config.bow).trim(); _bd.classList.add('ai-filled'); }
+  }
   document.getElementById('ind-specs').classList.add('visible'); document.getElementById('ind-palette').classList.add('visible');
   setTimeout(function() { generatePrompts(true); }, 300);
 }
@@ -1282,6 +1299,38 @@ function setAIStatus(msg, type) {
   var el = document.getElementById('aiStatus'); el.textContent = msg;
   el.className = 'ai-status' + (type ? ' ' + type : '');
 }
+
+// ── BOW ──
+document.getElementById('bowEnabled').addEventListener('change', function() {
+  document.getElementById('bowFields').style.display = this.checked ? 'block' : 'none';
+});
+
+async function aiDesignBow() {
+  var btn = document.getElementById('bowAiBtn');
+  var statusEl = document.getElementById('bowStatus');
+  var be = document.getElementById('bowEnabled');
+  if (be && !be.checked) { be.checked = true; document.getElementById('bowFields').style.display = 'block'; }
+  var palette = document.getElementById('customPalette').value.trim() || getActive('palettePills');
+  var ctx = 'Season: ' + getActive('seasonPills') + '. Palette: ' + palette +
+            '. Florals: ' + document.getElementById('florals').value.trim() +
+            '. Composition: ' + getActive('coveragePills') + '.';
+  var sys = 'You are Evercrafted\'s bow stylist for luxury FAUX botanical wreaths. Given a wreath\'s season, palette, florals, and composition, design ONE elegant ribbon bow. Choose a placement that harmonizes with the composition\'s open and dense areas, a color drawn from or complementing the palette, a material (satin, velvet, silk, or linen ribbon), and a scale. The bow is faux fabric, never fresh. RESPOND ONLY WITH VALID JSON, no markdown: {"bow":"one phrase: placement, color, material, scale","rationale":"one short sentence"}';
+  btn.disabled = true; statusEl.textContent = 'Designing the bow…'; statusEl.className = 'ai-status';
+  try {
+    var res = await fetch(CLAUDE_PROXY_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:300, system:sys, messages:[{role:'user',content:ctx}] }) });
+    var data = await res.json();
+    var cfg = JSON.parse(data.content[0].text.replace(/```json|```/g,'').trim());
+    var bd = document.getElementById('bowDetails');
+    bd.value = cfg.bow; bd.classList.add('ai-filled');
+    statusEl.textContent = '✦ ' + (cfg.rationale || 'Bow designed.'); statusEl.className = 'ai-status success';
+    btn.disabled = false;
+    generatePrompts(true);
+  } catch(e) {
+    statusEl.textContent = 'Something went wrong.'; statusEl.className = 'ai-status error';
+    btn.disabled = false;
+  }
+}
+document.getElementById('bowAiBtn').addEventListener('click', aiDesignBow);
 
 // ── COLLECTION BUILDER ──
 function initCollectionSlots() {
@@ -2433,6 +2482,8 @@ function collectSession() {
       foliage:       val('foliage'),
       florals:       val('florals'),
       accents:       val('accents'),
+      bowEnabled:    chk('bowEnabled'),
+      bowDetails:    val('bowDetails'),
       blueprintUrl:  val('blueprintUrl'),
       seed:          val('seed'),
       ar:            val('ar'),
@@ -2517,6 +2568,8 @@ function restoreSession(session) {
   setVal('aiBriefInput',s.aiBrief); setVal('diameter',s.diameter); setVal('baseType',s.baseType);
   setVal('customPalette',s.customPalette); setVal('foliage',s.foliage); setVal('florals',s.florals);
   setVal('accents',s.accents); setVal('blueprintUrl',s.blueprintUrl); setVal('seed',s.seed);
+  setChk('bowEnabled',s.bowEnabled); setVal('bowDetails',s.bowDetails);
+  var _bowEl=document.getElementById('bowEnabled'); if(_bowEl) _bowEl.dispatchEvent(new Event('change'));
   setVal('ar',s.ar); setChk('discordMode',s.discordMode); setVal('srefUrl',s.srefUrl);
   if(s.chaos!=null)    setSlider('chaos',   'chaosVal',   s.chaos,   false);
   if(s.stylize!=null)  setSlider('stylize', 'stylizeVal', s.stylize, false);
