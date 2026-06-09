@@ -2222,6 +2222,34 @@ function generateLookbookHTML(opts) {
     lifestyleSection = '<section id="lifestyle"><div class="lifestyle-head"><div class="overline">The World It Lives In</div><h2>' + colName.split(' ').slice(0,4).join(' ') + '</h2></div><div class="ls-grid">' + lsItems + '</div></section>';
   }
 
+  // ── Editorial interleave: lifestyle scenes paired with story, wreath overlays on scenes ──
+  function _ls(idx) { return (lifestyle && lifestyle.length) ? lifestyle[idx % lifestyle.length] : null; }
+  function _sceneBeat(ls, txt) {
+    if (!txt) return '';
+    var hasImg = ls && ls.src;
+    var cls = hasImg ? 'beat scene-beat' : 'beat beat-story-1';
+    var bg = hasImg ? '<div class="bg" style="background-image:url(' + ls.src + ')"></div>' : '';
+    return '<section class="' + cls + '">' + bg + '<div class="scrim"></div><div class="copy"><p class="line"><em>' + txt.substring(0,170) + '</em></p></div></section>\n';
+  }
+  function _wreathFeature(w, ls, cap) {
+    if (!w || !(w.img && w.img.length > 100)) return '';
+    var bg = (ls && ls.src) ? '<div class="bg" style="background-image:url(' + ls.src + ')"></div>' : '<div class="bg feature-fallback"></div>';
+    return '<section class="feature">' + bg + '<div class="feature-scrim"></div>' +
+      '<figure class="feature-card">' +
+        '<img src="' + w.img + '" alt="' + w.name + '">' +
+        '<figcaption>' +
+          '<span class="feature-name">' + w.name + '</span>' +
+          (cap ? '<span class="feature-cap">' + cap + '</span>' : '') +
+          '<a href="' + ctaLink + '" class="feature-cta">' + ctaText + '</a>' +
+        '</figcaption>' +
+      '</figure>' +
+    '</section>\n';
+  }
+  var sceneA   = _sceneBeat(_ls(0), beatPara2);
+  var featureA = _wreathFeature(wreaths[0], _ls(1), lyricalCaptions[0] || '');
+  var sceneB   = (beatPara3 && beatPara3 !== beatPara2) ? _sceneBeat(_ls(2), beatPara3) : '';
+  var featureB = (wreaths.length > 1) ? _wreathFeature(wreaths[1], _ls(3), lyricalCaptions[1] || '') : '';
+
   // Noise SVG texture
   var noiseSvg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E";
 
@@ -2261,6 +2289,18 @@ function generateLookbookHTML(opts) {
   /* STORY BEAT BACKGROUNDS */
   '.beat-story-1{background:linear-gradient(160deg,#171410 0%,#2a2118 50%,#1e1a14 100%);}' +
   '.beat-story-2{background:linear-gradient(200deg,#101518 0%,#1a2820 50%,#141e16 100%);}' +
+  '.scene-beat .bg{filter:saturate(.92) contrast(1.02);}' +
+  '.feature{position:relative;min-height:100vh;display:grid;place-items:center;overflow:hidden;}' +
+  '.feature .bg{position:absolute;inset:0;background-size:cover;background-position:center;filter:saturate(.85);}' +
+  '.feature .feature-fallback{background:linear-gradient(160deg,#1a2016,#2d3d28);}' +
+  '.feature-scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,12,10,.5),rgba(8,12,10,.62));}' +
+  '.feature-card{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;text-align:center;gap:18px;padding:56px 28px;max-width:540px;}' +
+  '.feature-card img{width:min(60vmin,420px);height:auto;border-radius:14px;box-shadow:0 34px 90px rgba(0,0,0,.45);}' +
+  '.feature-card figcaption{display:flex;flex-direction:column;align-items:center;gap:12px;}' +
+  '.feature-name{font-family:var(--serif);font-style:italic;font-weight:300;font-size:clamp(24px,3.2vw,38px);color:#f5f2ec;letter-spacing:.01em;}' +
+  '.feature-cap{font-family:var(--serif);font-weight:300;font-size:clamp(14px,1.5vw,18px);line-height:1.75;color:rgba(245,242,236,.82);max-width:440px;}' +
+  '.feature-cta{font-family:var(--mono);font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:#f5f2ec;text-decoration:none;border:1px solid rgba(245,242,236,.5);border-radius:2px;padding:12px 28px;transition:background .3s,color .3s;}' +
+  '.feature-cta:hover{background:#f5f2ec;color:var(--black);}' +
 
   /* ASSEMBLY */
   '#assembly{position:relative;height:320vh;background:var(--paper);}' +
@@ -2330,8 +2370,8 @@ function generateLookbookHTML(opts) {
     '<div class="scroll-cue"></div>' +
   '</section>\n' +
 
-  /* STORY BEAT 1 */
-  (beatPara2 ? '<section class="beat beat-story-1"><div class="scrim"></div><div class="copy"><p class="line"><em>' + beatPara2.substring(0,160) + '</em></p></div></section>\n' : '') +
+  /* SCENE A — lifestyle image + story */
+  sceneA +
 
   /* ASSEMBLY */
   '<section id="assembly">' +
@@ -2348,8 +2388,8 @@ function generateLookbookHTML(opts) {
     '</div>' +
   '</section>\n' +
 
-  /* STORY BEAT 2 */
-  (beatPara3 && beatPara3 !== beatPara2 ? '<section class="beat beat-story-2"><div class="scrim"></div><div class="copy"><p class="line"><em>' + beatPara3.substring(0,150) + '</em></p></div></section>\n' : '') +
+  /* FEATURE A (wreath over scene) + SCENE B + FEATURE B */
+  featureA + sceneB + featureB +
 
   /* GALLERY */
   '<section id="reveal">' +
