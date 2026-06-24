@@ -1033,6 +1033,18 @@ var CLAUDE_PROXY_URL = 'https://qybnmlqesnbmgxayhllf.supabase.co/functions/v1/cl
 // Edit this list to add/remove banned looks. Bump --v 6.1 to --v 7 to try v7.
 var NEG_FRESH = ' --v 6.1 --no fresh flowers, real flowers, live plants, water droplets, dew, condensation, plastic toy, text, words, letters, watermark, signature';
 
+// ── CLAUDE RESPONSE HELPER ──
+// Pulls the text out of a proxy/Claude response and throws a *useful* error
+// (bad key, rate limit, no credits, etc.) instead of letting a generic
+// "Something went wrong" hide the real cause.
+function claudeText(data) {
+  if (!data) throw new Error('No response from the server.');
+  if (data.error) throw new Error('API error: ' + (data.error.message || data.error.detail || data.error));
+  if (data.type === 'error') throw new Error('Claude error: ' + ((data.error && data.error.message) ? data.error.message : 'request rejected'));
+  if (!data.content || !data.content.length) throw new Error('Empty response from Claude — check the API key and credits in Supabase.');
+  return data.content.map(function(c) { return c.text || ''; }).join('');
+}
+
 // ── PAGE NAV ──
 function showPage(name) {
   document.querySelectorAll('.page-view').forEach(function(p) { p.classList.remove('active'); });
@@ -1245,7 +1257,7 @@ async function refinePrompt(key) {
   try {
     var res = await fetch(CLAUDE_PROXY_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1000, system: 'You are Evercrafted\'s prompt refinement engine. Return ONLY the revised /imagine prompt. Preserve ALL Midjourney parameters exactly. Add 2-4 evocative material descriptors. Tighten clock-position placement language. Remove generic phrasing. No preamble.', messages: [{ role: 'user', content: 'Refine:\n\n' + original }] }) });
     var data = await res.json();
-    block.removeChild(overlay); block.textContent = data.content[0].text.trim();
+    block.removeChild(overlay); block.textContent = claudeText(data).trim();
     block.style.background = '#101e20'; block.style.borderLeft = '3px solid rgba(139,127,212,0.6)';
     btn.textContent = '✦ Refined'; btn.style.color = '#80c8a4';
     setTimeout(function() { btn.disabled = false; btn.textContent = '✦ AI Refine'; btn.style.color = ''; }, 3000);
@@ -1266,14 +1278,14 @@ document.getElementById('aiBriefBtn').addEventListener('click', async function()
   try {
     var res = await fetch(CLAUDE_PROXY_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:1000, system:sys, messages:[{role:'user',content:'Brief: "'+brief+'"'}] }) });
     var data = await res.json();
-    var config = JSON.parse(data.content[0].text.replace(/```json|```/g,'').trim());
+    var config = JSON.parse(claudeText(data).replace(/```json|```/g,'').trim());
     applyAIConfig(config);
     setAIStatus('✦ ' + config.designRationale, 'success');
     document.getElementById('briefBtnText').textContent = 'Reconfigure';
     document.getElementById('briefBtnIcon').textContent = '✦';
     btn.disabled = false;
   } catch(e) {
-    setAIStatus('Something went wrong.','error');
+    setAIStatus(e.message || 'Something went wrong.','error');
     document.getElementById('briefBtnIcon').textContent = '✦';
     document.getElementById('briefBtnText').textContent = 'Configure';
     btn.disabled = false;
@@ -1320,14 +1332,14 @@ async function aiDesignBow() {
   try {
     var res = await fetch(CLAUDE_PROXY_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:300, system:sys, messages:[{role:'user',content:ctx}] }) });
     var data = await res.json();
-    var cfg = JSON.parse(data.content[0].text.replace(/```json|```/g,'').trim());
+    var cfg = JSON.parse(claudeText(data).replace(/```json|```/g,'').trim());
     var bd = document.getElementById('bowDetails');
     bd.value = cfg.bow; bd.classList.add('ai-filled');
     statusEl.textContent = '✦ ' + (cfg.rationale || 'Bow designed.'); statusEl.className = 'ai-status success';
     btn.disabled = false;
     generatePrompts(true);
   } catch(e) {
-    statusEl.textContent = 'Something went wrong.'; statusEl.className = 'ai-status error';
+    statusEl.textContent = e.message || 'Something went wrong.'; statusEl.className = 'ai-status error';
     btn.disabled = false;
   }
 }
@@ -1461,7 +1473,7 @@ async function refineSlotPrompt(blockId, btn) {
   try {
     var res = await fetch(CLAUDE_PROXY_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:1000, system:'Return ONLY the revised /imagine prompt. Preserve ALL Midjourney parameters exactly. Deepen emotional language, add material texture descriptors, tighten placement language. No preamble.', messages:[{role:'user',content:'Refine:\n\n'+original}] }) });
     var data = await res.json();
-    block.textContent = data.content[0].text.trim();
+    block.textContent = claudeText(data).trim();
     block.style.borderLeft = '3px solid rgba(139,127,212,0.6)';
     btn.textContent = '✦ Refined'; btn.style.color = '#80c8a4';
     setTimeout(function() { btn.disabled = false; btn.textContent = '✦ Refine'; btn.style.color = ''; }, 3000);
@@ -1534,7 +1546,7 @@ async function generateStory(seedVal, season, count) {
   var sys = 'You are Evercrafted\'s narrative engine. Write a short poetic collection story — 3 to 5 paragraphs — for a luxury faux botanical wreath collection. The story should feel like the opening pages of a beautiful design book: evocative, sensory, unhurried. Establish a place, a light quality, a mood, and a sense of time or a moment held still. Weave in specific sensory details — colors as they appear in nature, textures, the weight of air, the quality of light. These become the raw material for palette, floral, and composition decisions later. Do not mention wreaths or florals directly. Write in present tense. Return only the story text — no title, no preamble.';
   var res = await fetch(CLAUDE_PROXY_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:700, system:sys, messages:[{role:'user',content:'Write a collection story for a '+season+' wreath collection ('+count+' pieces) from this seed:\n\n"'+seedVal+'"'}] }) });
   var data = await res.json();
-  return data.content[0].text.trim();
+  return claudeText(data).trim();
 }
 
 document.getElementById('btnCollectionGenerate').addEventListener('click', async function() {
@@ -1592,7 +1604,7 @@ document.getElementById('btnCollectionGenerate').addEventListener('click', async
   try {
     var res = await fetch(CLAUDE_PROXY_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:2500, system:sys, messages:[{role:'user',content:msg}] }) });
     var data = await res.json();
-    var result = JSON.parse(data.content[0].text.replace(/```json|```/g,'').trim());
+    var result = JSON.parse(claudeText(data).replace(/```json|```/g,'').trim());
     var statusMsg = '✦ ' + result.collectionRationale;
     if (result.storyConnection) statusMsg += ' · ' + result.storyConnection;
     statusEl.textContent = statusMsg;
@@ -1633,7 +1645,7 @@ document.getElementById('btnCollectionGenerate').addEventListener('click', async
     });
     btn.disabled = false; icon.textContent = '✦';
   } catch(e) {
-    statusEl.textContent = 'Something went wrong. Try again.';
+    statusEl.textContent = (e.message || 'Something went wrong') + ' — try again.';
     statusEl.className = 'coll-status error';
     btn.disabled = false; icon.textContent = '✦';
     console.error(e);
@@ -1917,7 +1929,7 @@ async function generateLifestylePrompts() {
       })
     });
     var data   = await resp.json();
-    var rawTxt = data.content.map(function(c) { return c.text || ''; }).join('').replace(/```json|```/g,'').trim();
+    var rawTxt = claudeText(data).replace(/```json|```/g,'').trim();
     var prompts = JSON.parse(rawTxt);
 
     if (!Array.isArray(prompts) || prompts.length < 6) throw new Error('Bad response shape');
@@ -1934,7 +1946,7 @@ async function generateLifestylePrompts() {
 
   } catch(e) {
     dot.className  = 'ls-status-dot';
-    text.textContent = '⚠ Something went wrong — check your API connection and try again.';
+    text.textContent = '⚠ ' + (e.message || 'Something went wrong — check your API connection and try again.');
     console.error('Lifestyle generation error:', e);
   }
 
@@ -1981,7 +1993,7 @@ async function refineLsPrompt(id, btn) {
       })
     });
     var d = await resp.json();
-    var refined = d.content.map(function(c) { return c.text||''; }).join('').trim();
+    var refined = claudeText(d).trim();
     if (refined.length > 20) {
       _lsPrompts[id] = refined;
       var el = document.getElementById('ls-prompt-' + id);
@@ -2163,7 +2175,7 @@ async function buildLookbook() {
         body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 400, messages: [{ role: 'user', content: capPrompt }] })
       });
       var d = await resp.json();
-      var txt = d.content.map(function(c) { return c.text||''; }).join('').replace(/```json|```/g,'').trim();
+      var txt = claudeText(d).replace(/```json|```/g,'').trim();
       lyricalCaptions = JSON.parse(txt);
     } catch(e) { lyricalCaptions = []; }
   }
