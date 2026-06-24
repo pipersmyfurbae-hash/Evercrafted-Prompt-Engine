@@ -1030,8 +1030,9 @@ var CLAUDE_PROXY_URL = 'https://qybnmlqesnbmgxayhllf.supabase.co/functions/v1/cl
 // Appended to EVERY Midjourney prompt. Pins the model version for consistent
 // renders and uses --no (which Midjourney obeys far more reliably than inline
 // "NO ..." wording) to hard-block fresh/real florals, wet cues, and text.
-// Edit this list to add/remove banned looks. Bump --v 6.1 to --v 7 to try v7.
-var NEG_FRESH = ' --v 6.1 --no fresh flowers, real flowers, live plants, water droplets, dew, condensation, plastic toy, text, words, letters, watermark, signature';
+// Edit this list to add/remove banned looks. Version is set by MJ_VERSION below.
+var MJ_VERSION = '7';  // Midjourney model version on every prompt (you work in V7)
+var NEG_FRESH = ' --v ' + MJ_VERSION + ' --no fresh flowers, real flowers, live plants, water droplets, dew, condensation, plastic toy, text, words, letters, watermark, signature';
 
 // ── CLAUDE RESPONSE HELPER ──
 // Pulls the text out of a proxy/Claude response and throws a *useful* error
@@ -1884,7 +1885,7 @@ async function generateLifestylePrompts() {
     '— Name actual surface materials: wide-plank oak floors, hand-troweled plaster, dark-stained cedar, aged brick, marble threshold, worn limestone, matte black iron hardware, linen drape',
     '— Describe spatial depth: what is close, what recedes, what is out of focus',
     '— Maintain complete empty space where a wreath would naturally hang — no placeholder object, just the wall/door/gate as it would look without the wreath',
-    '— End every prompt with: --ar 3:4 --v 6.1 --style raw --q 2 --s 60',
+    '— End every prompt with: --ar 3:4 --v ' + MJ_VERSION + ' --style raw --q 2 --s 60',
     '',
     'NEVER include: wreaths, flowers, botanicals, garlands, any hanging decor, people, pets, or text.',
     'RESPOND ONLY WITH VALID JSON — an array of 6 prompt strings. No markdown, no code fences.'
@@ -1912,7 +1913,7 @@ async function generateLifestylePrompts() {
     '— Be specific enough that two prompts from this set would look like they belong to the same house and the same moment in time',
     '— Describe light behavior on the specific surfaces of that scene in physical, precise terms',
     '— Leave clear, beautiful negative space where a wreath would naturally hang',
-    '— End with: --ar 3:4 --v 6.1 --style raw --q 2 --s 60' + (seed ? ' --seed ' + seed : ''),
+    '— End with: --ar 3:4 --v ' + MJ_VERSION + ' --style raw --q 2 --s 60' + (seed ? ' --seed ' + seed : ''),
     '',
     'Return ONLY a JSON array of 6 strings.'
   ].join('\n');
