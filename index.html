@@ -1026,11 +1026,12 @@ footer { text-align: center; padding: 18px; font-size: 0.72rem; color: #bbb; let
 // different deployment, change the URL below (see supabase/functions/claude).
 var CLAUDE_PROXY_URL = 'https://qybnmlqesnbmgxayhllf.supabase.co/functions/v1/claude';
 
-// ── FAUX-ONLY GUARD ──
-// Appended to EVERY Midjourney prompt. Midjourney respects --no far more
-// reliably than inline "NO fresh" wording. Edit this list to add/remove banned
-// looks; it is the hard block that keeps renders to high-end faux florals.
-var NEG_FRESH = ' --no fresh flowers, real flowers, live flowers, living plants, fresh botanicals, wilting petals, dewy moisture, water droplets, dew, condensation, potted plant, garden bed, cut stems, flowers in water, vase, text, words, letters, typography, watermark, signature, caption, label';
+// ── FAUX-ONLY GUARD + VERSION ──
+// Appended to EVERY Midjourney prompt. Pins the model version for consistent
+// renders and uses --no (which Midjourney obeys far more reliably than inline
+// "NO ..." wording) to hard-block fresh/real florals, wet cues, and text.
+// Edit this list to add/remove banned looks. Bump --v 6.1 to --v 7 to try v7.
+var NEG_FRESH = ' --v 6.1 --no fresh flowers, real flowers, live plants, water droplets, dew, condensation, plastic toy, text, words, letters, watermark, signature';
 
 // ── PAGE NAV ──
 function showPage(name) {
@@ -1139,7 +1140,7 @@ function buildBaseText() {
   var bowOn = document.getElementById('bowEnabled') && document.getElementById('bowEnabled').checked;
   var bowDetails = document.getElementById('bowDetails') ? document.getElementById('bowDetails').value.trim() : '';
   var bowText = bowOn ? ', finished with a luxury faux ribbon bow — ' + (bowDetails || 'an elegant satin bow, placement and color chosen to complement the palette') : '';
-  return 'professional product photograph of a ' + diameter + ' inch luxury faux botanical ' + season + ' wreath on natural ' + base + ' base, ' + form + ', ' + composition + ', palette of ' + palette + ', botanicals: luxury faux ' + foliage + '; luxury faux ' + florals + '; accents: ' + accents + bowText + ', matte silk petals with firm edges and visible textile microfibers, semi-gloss foliage (silk not plastic), structured botanical stems, NO plastic shine, NO dewy or moist cues, NO artificial glow, museum-quality luxury faux florals, macro botanical realism, ' + bg + ', ' + angle + ', side-lit natural daylight (12-2pm), soft diffused shadows, 85mm f/3.5 lens, crisp focus, entire wreath fully visible, minimal distortion';
+  return 'professional product photograph of a ' + diameter + ' inch luxury faux ' + season + ' wreath on a natural ' + base + ' base, ' + form + ', ' + composition + ', handcrafted from premium artificial silk botanicals, foliage of ' + foliage + ', florals of ' + florals + ', accents of ' + accents + bowText + ', palette of ' + palette + ', matte silk petals with soft realistic textile texture, museum-quality artificial florals, ' + bg + ', ' + angle + ', soft side-lit natural daylight, gentle diffused shadows, 85mm f/3.5 lens, sharp focus, high detail';
 }
 
 function getParams() {
@@ -1605,7 +1606,7 @@ document.getElementById('btnCollectionGenerate').addEventListener('click', async
       if (floralsEl) floralsEl.value = w.focalFlowers;
       if (accentEl) accentEl.value = w.accentColor;
 
-      var baseText = 'professional product photograph of a 24 inch luxury faux botanical '+season+' wreath on natural grapevine base, complete continuous circular grapevine ring, fully intact and unbroken all the way around, with intentionally asymmetric floral placement, '+w.composition+', palette of '+w.palette+', botanicals: luxury faux '+w.foliage+'; luxury faux '+w.focalFlowers+'; accents: '+w.accents+', matte silk petals with firm edges and visible textile microfibers, semi-gloss foliage (silk not plastic), NO plastic shine, NO artificial glow, museum-quality luxury faux florals, macro botanical realism, neutral plaster background, flat-lay straight-on product view, entire wreath fully visible, side-lit natural daylight (12-2pm), 85mm f/3.5 lens, crisp focus';
+      var baseText = 'professional product photograph of a 24 inch luxury faux '+season+' wreath on a natural grapevine base, complete continuous circular grapevine ring, fully intact and unbroken all the way around, with intentionally asymmetric floral placement, '+w.composition+', handcrafted from premium artificial silk botanicals, foliage of '+w.foliage+', florals of '+w.focalFlowers+', accents of '+w.accents+', palette of '+w.palette+', matte silk petals with soft realistic textile texture, museum-quality artificial florals, neutral plaster background, flat-lay straight-on product view, entire wreath fully visible, soft side-lit natural daylight, gentle diffused shadows, 85mm f/3.5 lens, sharp focus, high detail';
 
       // Store for seed-triggered rebuild
       _slotData[i] = { baseText: baseText };
