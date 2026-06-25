@@ -4,7 +4,11 @@
 Color Theme Generator's **7 functional roles** with EC_WR_V2's **60-30-10 + greenery**
 proportional model so there is exactly one palette truth, not two.
 
-**Status:** Proposed — pending ratification + wiring into EC_WR_V2 (Gap G5).
+**Status:** Proposed — pending ratification.
+**Reality note:** the live blueprint schema in `Evercrafted-Full` is **`EC_CANON_v1`**
+(`evercrafted-schema.js` → `compileBlueprint`), NOT `EC_WR_V2`, and palette is currently handled
+inline via `VOCAB`. Wire this transform to `EC_CANON_v1`'s palette output; treat "EC_WR_V2" below as
+the handoff-doc's name for the same concept.
 
 ---
 

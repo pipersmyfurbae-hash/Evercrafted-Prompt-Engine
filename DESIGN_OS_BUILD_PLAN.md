@@ -133,3 +133,64 @@ Effort = engineering time *after* access + canonical-repo decision. Ranges refle
 - Prompts already use `--v 7`, `1:1` for wreaths, `--no` faux/text guards, intact-ring + no-text fixes.
 - This is the closest thing to a working "prompt compiler + render" UI — a candidate to become the
   canonical Layer 6–8 surface IF it's refactored to consume blueprints instead of freeform fields.
+
+---
+
+## 7. VERIFIED — `Evercrafted-Full` is canonical (web-read, 2026)
+
+Read directly from the public repo. Replaces the "probable/UNVERIFIED" tables above.
+
+**It is a Node/Express + Vercel app** (`server.js`, pkg `evercrafted-api`) fronting static HTML,
+using `@anthropic-ai/sdk` + Supabase + Stripe. Anthropic key is server-side (browser never sees it).
+
+**What's REAL and tested (the hard part already exists):**
+- Deterministic placement engine: `engine.js` + `evercrafted-schema.js` — polar coords (`toCart`),
+  `r_work` (`rWorkIn`), `mulberry32`, R-rules as generators, with golden/characterization tests
+  (`engine.golden.json`, `schema.test.js`).
+- Secure proxy + persistence: `server.js` (`/api/scene`, `/api/blueprint-doc`, `/api/ai-generate`,
+  `/api/render`, `/api/realism`), Supabase, Stripe.
+- The repo already ships its OWN plans: `docs/marketplace-consolidation-plan.md`,
+  `docs/placement-engine-convergence.md`.
+
+**Naming reconciliation — the handoff doc ≠ the code (use the code as ground truth):**
+
+| Handoff doc constant | In the actual code |
+|---|---|
+| `EC_WR_V2` | **`EC_CANON_v1`** (real schema string) |
+| `EC_PROMPT_V1` | does not exist (prompt = `renderFacts` → Claude "Stylist") |
+| `EC_PALETTE_V1` | not in app (palette inline via `VOCAB`) |
+| `WREATH_STYLE_DNA` / "silence arc" | NOT FOUND |
+| `BSRE` | NOT FOUND (no repair loop) |
+| `PCValidator` | NOT FOUND |
+| `BRC-1.1` deterministic compositor | NOT a compositor — a Replicate/Flux realism **proxy** (`brc-proxy/api/realism.js`) |
+| Midjourney v7 | not MJ-specific; render via FAL / OpenAI / APIframe relay |
+| model | `claude-sonnet-4-20250514` (old — migrate) |
+
+**Engine status (per the repo's own convergence doc):**
+- Built as GENERATORS: R1, R4, R5, R9, R12, R17 (partial).
+- NOT built: validators R10, R13, R15, R16, R17(quality), R18; R8 size-band tables; R2.1 greenery
+  breakers; R9 genome export.
+- Known gated divergences: RNG is sin-hash (not canonical `mulberry32`); R4 yields differ from canon
+  (affects shopping-list pricing).
+- Its own phased plan: P0 align conventions (RNG/r_work/yields) → P1 port validators as a read-only
+  scoring module → P2 full R9 generator + class/size bands → P3 Pareto calibration.
+
+**Consolidation — the repo ALREADY has a plan; adopt it:**
+- Canonical core = `memory-scene` + `build-view` engine + Blooma UI + Design Studio WEBSITE landing.
+- Keepers (6): Inventory Weaver, Design With What You Have, Pricing Calculator, Etsy Listing Builder,
+  Academy, Design Principles Coach (→ folded into core). Pro add-ons: Prompt Studio, Parametric Lab.
+- Retire (~20): studio re-skins, dup taggers/inventory, prompt dups, Humanizer (Design Studio App,
+  Wreath Studio Pro, Wreath AI, Wreathly AI, Blueprint Studio + marketing twins). Feel Space = separate biz.
+
+**Where THIS repo (`Evercrafted-Prompt-Engine`) fits:** another prompt-studio variant, overlapping
+Evercrafted-Full's `Prompt Studio` / `Prompt Engine` folders — but more polished (V7, `--no` faux/text
+guards, 1:1, lookbook interleave, hardened errors). Decision: fold these render-quality wins into the
+canonical Prompt Studio, or designate this as the Prompt Studio keeper. Don't leave it an island.
+
+**Revised top priorities (grounded):**
+1. Adopt `Evercrafted-Full` as home; execute its own consolidation (archive the ~20 retirees on GitHub).
+2. Engine P0/P1 from the convergence doc: align RNG→`mulberry32` + `r_work` + yields; port the missing
+   validators (R10/R13/R15–R18) as a read-only scoring pass — that IS the "BSRE" the handoff doc wants.
+3. Keep `EC_CANON_v1` as the schema truth; treat the doc's `EC_*` names as aliases (or rename code once).
+4. Fold this prompt-engine's render-quality wins into the canonical Prompt Studio.
+5. Migrate the model off `claude-sonnet-4-20250514`.
